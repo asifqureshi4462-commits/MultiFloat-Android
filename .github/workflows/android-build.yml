@@ -20,23 +20,16 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Setup Gradle
+      - name: Set up Gradle 9.3.1
         uses: gradle/actions/setup-gradle@v4
-
-      - name: Verify Gradle wrapper exists
-        run: |
-          ls -la
-          if [ ! -f "./gradlew" ]; then
-            echo "ERROR: ./gradlew is missing in the repository root."
-            exit 1
-          fi
-          chmod +x ./gradlew
+        with:
+          gradle-version: '9.3.1'
 
       - name: Run Unit & Robolectric Tests
-        run: ./gradlew :app:testDebugUnitTest
+        run: gradle :app:testDebugUnitTest
 
       - name: Build Debug APK
-        run: ./gradlew :app:assembleDebug
+        run: gradle :app:assembleDebug
 
       - name: Upload Debug APK Artifact
         uses: actions/upload-artifact@v4

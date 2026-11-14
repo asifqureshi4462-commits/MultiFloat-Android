@@ -28,6 +28,10 @@ public class AppPreferences {
     public static final String AI_PROVIDER_GEMINI = "gemini";
     public static final String AI_PROVIDER_OPENAI = "openai";
 
+    public static final String LAUNCH_MODE_FLOATING = "floating";
+    public static final String LAUNCH_MODE_NORMAL = "normal";
+    public static final String LAUNCH_MODE_ASK = "ask";
+
     public static final String KEY_AI_API = "ai_api_key";
     public static final String KEY_TRANSLATE_API = "translate_api_key";
 
@@ -43,6 +47,26 @@ public class AppPreferences {
 
     public void setOnboardingCompleted(boolean completed) {
         prefs.edit().putBoolean("onboarding_completed", completed).apply();
+    }
+
+    public boolean isSetupCenterCompleted() {
+        return prefs.getBoolean("setup_center_completed", false);
+    }
+
+    public void setSetupCenterCompleted(boolean completed) {
+        prefs.edit().putBoolean("setup_center_completed", completed).apply();
+    }
+
+    public String getExternalLaunchMode() {
+        return prefs.getString("external_launch_mode", LAUNCH_MODE_FLOATING);
+    }
+
+    public void setExternalLaunchMode(String mode) {
+        if (LAUNCH_MODE_NORMAL.equals(mode) || LAUNCH_MODE_ASK.equals(mode)) {
+            prefs.edit().putString("external_launch_mode", mode).apply();
+        } else {
+            prefs.edit().putString("external_launch_mode", LAUNCH_MODE_FLOATING).apply();
+        }
     }
 
     public int getThemeMode() {

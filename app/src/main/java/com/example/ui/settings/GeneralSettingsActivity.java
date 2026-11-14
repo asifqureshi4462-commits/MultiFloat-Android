@@ -1,5 +1,6 @@
 package com.example.ui.settings;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.widget.EditText;
 import android.widget.RadioButton;
@@ -10,6 +11,11 @@ import com.example.MultiFloatApp;
 import com.example.R;
 import com.example.data.preferences.AppPreferences;
 import com.example.data.preferences.SecureKeyStore;
+import com.example.service.FloatingEngineBus;
+import com.example.ui.CompatibilityTestActivity;
+import com.example.ui.MultitaskingSetupCenterActivity;
+import com.example.ui.PermissionSetupActivity;
+import com.example.ui.TroubleshootingActivity;
 import com.example.util.EdgeToEdgeHelper;
 import com.google.android.material.materialswitch.MaterialSwitch;
 
@@ -25,6 +31,35 @@ public class GeneralSettingsActivity extends AppCompatActivity {
         SecureKeyStore keyStore = MultiFloatApp.get().getSecureKeyStore();
 
         findViewById(R.id.btn_gen_set_back).setOnClickListener(v -> finish());
+
+        findViewById(R.id.btn_gs_setup_center).setOnClickListener(v ->
+                startActivity(new Intent(this, MultitaskingSetupCenterActivity.class)));
+        findViewById(R.id.btn_gs_perm_wizard).setOnClickListener(v ->
+                startActivity(new Intent(this, PermissionSetupActivity.class)));
+        findViewById(R.id.btn_gs_compat_test).setOnClickListener(v ->
+                startActivity(new Intent(this, CompatibilityTestActivity.class)));
+        findViewById(R.id.btn_gs_troubleshooting).setOnClickListener(v ->
+                startActivity(new Intent(this, TroubleshootingActivity.class)));
+
+        RadioGroup rgLaunchMode = findViewById(R.id.rg_ext_launch_mode);
+        String launchMode = prefs.getExternalLaunchMode();
+        if (AppPreferences.LAUNCH_MODE_NORMAL.equals(launchMode)) {
+            ((RadioButton) findViewById(R.id.rb_launch_normal)).setChecked(true);
+        } else if (AppPreferences.LAUNCH_MODE_ASK.equals(launchMode)) {
+            ((RadioButton) findViewById(R.id.rb_launch_ask)).setChecked(true);
+        } else {
+            ((RadioButton) findViewById(R.id.rb_launch_floating)).setChecked(true);
+        }
+        rgLaunchMode.setOnCheckedChangeListener((group, checkedId) -> {
+            if (checkedId == R.id.rb_launch_normal) {
+                prefs.setExternalLaunchMode(AppPreferences.LAUNCH_MODE_NORMAL);
+            } else if (checkedId == R.id.rb_launch_ask) {
+                prefs.setExternalLaunchMode(AppPreferences.LAUNCH_MODE_ASK);
+            } else {
+                prefs.setExternalLaunchMode(AppPreferences.LAUNCH_MODE_FLOATING);
+            }
+            FloatingEngineBus.refreshConfig(this);
+        });
 
         MaterialSwitch swEdgeSnap = findViewById(R.id.switch_edge_snap);
         MaterialSwitch swRememberPos = findViewById(R.id.switch_remember_pos);

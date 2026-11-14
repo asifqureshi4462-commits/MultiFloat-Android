@@ -45,6 +45,112 @@
             android:orientation="vertical"
             android:padding="18dp">
 
+            <!-- Multitasking Setup Center & Compatibility Tools -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="18dp"
+                android:background="@drawable/bg_glass_card_accent"
+                android:orientation="vertical"
+                android:padding="14dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Device Setup &amp; Compatibility"
+                    android:textColor="@color/electric_cyan"
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
+
+                <Button
+                    android:id="@+id/btn_gs_setup_center"
+                    style="@style/Widget.Material3.Button"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:minHeight="48dp"
+                    android:text="@string/btn_setup_center" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:orientation="horizontal">
+
+                    <Button
+                        android:id="@+id/btn_gs_perm_wizard"
+                        style="@style/Widget.Material3.Button.TonalButton"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="6dp"
+                        android:layout_weight="1"
+                        android:minHeight="48dp"
+                        android:text="@string/btn_permissions"
+                        android:textSize="12sp" />
+
+                    <Button
+                        android:id="@+id/btn_gs_compat_test"
+                        style="@style/Widget.Material3.Button.TonalButton"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="6dp"
+                        android:layout_weight="1"
+                        android:minHeight="48dp"
+                        android:text="Compatibility Test"
+                        android:textSize="12sp" />
+                </LinearLayout>
+
+                <Button
+                    android:id="@+id/btn_gs_troubleshooting"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:minHeight="48dp"
+                    android:text="@string/btn_troubleshooting_center" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:text="Sidebar External App Launch Mode"
+                    android:textColor="@color/mf_text_primary"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+
+                <RadioGroup
+                    android:id="@+id/rg_ext_launch_mode"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:orientation="vertical">
+
+                    <RadioButton
+                        android:id="@+id/rb_launch_floating"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Attempt Floating Window (Explain if unsupported)"
+                        android:textColor="@color/mf_text_primary"
+                        android:textSize="12.5sp" />
+
+                    <RadioButton
+                        android:id="@+id/rb_launch_ask"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Ask Before Launching External App"
+                        android:textColor="@color/mf_text_primary"
+                        android:textSize="12.5sp" />
+
+                    <RadioButton
+                        android:id="@+id/rb_launch_normal"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Open Directly in Normal Full Screen"
+                        android:textColor="@color/mf_text_primary"
+                        android:textSize="12.5sp" />
+                </RadioGroup>
+            </LinearLayout>
+
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"

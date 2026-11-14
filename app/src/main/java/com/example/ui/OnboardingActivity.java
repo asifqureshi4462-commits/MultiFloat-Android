@@ -89,9 +89,8 @@ public class OnboardingActivity extends AppCompatActivity {
 
     private void finishOnboarding() {
         MultiFloatApp.get().getPreferences().setOnboardingCompleted(true);
-        Intent next = PermissionHelper.canDrawOverlays(this)
-                ? new Intent(this, MainActivity.class)
-                : new Intent(this, PermissionSetupActivity.class);
+        Intent next = new Intent(this, MultitaskingSetupCenterActivity.class);
+        next.putExtra(MultitaskingSetupCenterActivity.EXTRA_FROM_ONBOARDING, true);
         startActivity(next);
         finish();
     }

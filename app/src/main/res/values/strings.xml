@@ -136,4 +136,37 @@
     <string name="btn_manage_installed_apps">Select Installed Apps for Sidebar</string>
     <string name="section_sidebar_reorder">Custom Sidebar Shortcut Order</string>
     <string name="section_sidebar_icon_style">Sidebar Icon Style</string>
+
+    <!-- Multitasking Setup Center -->
+    <string name="setup_center_title">Multitasking Setup Center</string>
+    <string name="setup_center_subtitle">Configure your Android device for the best floating window experience.</string>
+    <string name="action_recheck_compatibility">Recheck Device Compatibility</string>
+    <string name="action_continue_dashboard">Continue to Dashboard</string>
+    <string name="btn_setup_center">Multitasking Setup Center</string>
+    <string name="btn_compatibility_test">Floating Compatibility Test</string>
+    <string name="btn_troubleshooting_center">Troubleshooting Center</string>
+
+    <!-- Permission Setup Wizard Additions -->
+    <string name="perm_fgs_title">Foreground Service Engine</string>
+    <string name="perm_fgs_desc">Uses Android special-use foreground service to keep active floating windows, the bubble launcher, and the edge sidebar responsive across apps.</string>
+    <string name="perm_battery_title">Battery Optimization</string>
+    <string name="perm_battery_desc">Prevents Android or OEM battery savers (like Xiaomi MIUI/HyperOS) from killing the MultiFloat sidebar and floating windows in the background.</string>
+    <string name="perm_media_listener_title">Music Notification Access (Optional)</string>
+    <string name="perm_media_listener_desc">Optional access used only by the Music Controls mini-app to display track metadata.</string>
+    <string name="perm_honest_disclaimer">Note: Granting these permissions enables MultiFloat\'s built-in floating windows and sidebar stability. They do not bypass Android or OEM restrictions on floating external third-party apps.</string>
+    <string name="action_recheck_permissions">Recheck All Permissions</string>
+
+    <!-- Floating Compatibility Test -->
+    <string name="compat_test_title">Floating Compatibility Test</string>
+    <string name="compat_test_subtitle">Verify MultiFloat\'s internal floating mini-apps first, then test external Android app behavior separately.</string>
+
+    <!-- Troubleshooting Center -->
+    <string name="troubleshooting_title">Troubleshooting Center</string>
+    <string name="troubleshooting_subtitle">Beginner-friendly explanations and manufacturer-specific fixes.</string>
+
+    <!-- External Launch Prompt Strings -->
+    <string name="ext_prompt_title">Launch External App</string>
+    <string name="ext_prompt_try_floating">Attempt Floating</string>
+    <string name="ext_prompt_open_normal">Open Normal Full Screen</string>
+    <string name="ext_prompt_open_setup">Setup Guide</string>
 </resources>

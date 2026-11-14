@@ -12,26 +12,36 @@
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:padding="16dp">
+        android:padding="12dp">
 
         <ImageButton
             android:id="@+id/btn_perm_back"
-            android:layout_width="44dp"
-            android:layout_height="44dp"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/cd_back"
             android:src="@drawable/ic_back"
             app:tint="@color/mf_text_primary" />
 
         <TextView
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
+            android:layout_weight="1"
             android:fontFamily="@font/plus_jakarta_sans"
             android:text="@string/perm_screen_title"
             android:textColor="@color/mf_text_primary"
             android:textSize="20sp"
             android:textStyle="bold" />
+
+        <ImageButton
+            android:id="@+id/btn_perm_recheck"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/action_recheck_permissions"
+            android:src="@drawable/ic_refresh"
+            app:tint="@color/mf_cyan_text" />
     </LinearLayout>
 
     <ScrollView
@@ -53,11 +63,11 @@
                 android:textColor="@color/mf_text_secondary"
                 android:textSize="13sp" />
 
-            <!-- Overlay Permission Card -->
+            <!-- 1. Overlay Permission Card -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
+                android:layout_marginTop="14dp"
                 android:background="@drawable/bg_glass_card_accent"
                 android:orientation="vertical"
                 android:padding="16dp">
@@ -71,7 +81,7 @@
                     <ImageView
                         android:layout_width="24dp"
                         android:layout_height="24dp"
-                        android:contentDescription="Overlay icon"
+                        android:contentDescription="@null"
                         android:src="@drawable/ic_windows"
                         app:tint="@color/electric_cyan" />
 
@@ -82,7 +92,7 @@
                         android:layout_weight="1"
                         android:text="@string/perm_overlay_title"
                         android:textColor="@color/mf_text_primary"
-                        android:textSize="16sp"
+                        android:textSize="15sp"
                         android:textStyle="bold" />
 
                     <TextView
@@ -102,22 +112,23 @@
                     android:layout_marginTop="8dp"
                     android:text="@string/perm_overlay_desc"
                     android:textColor="@color/mf_text_secondary"
-                    android:textSize="13sp" />
+                    android:textSize="12.5sp" />
 
                 <Button
                     android:id="@+id/btn_grant_overlay"
                     style="@style/Widget.Material3.Button"
                     android:layout_width="wrap_content"
-                    android:layout_height="40dp"
-                    android:layout_marginTop="12dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:minHeight="48dp"
                     android:text="Allow Display Over Apps" />
             </LinearLayout>
 
-            <!-- Notifications Permission Card -->
+            <!-- 2. Notifications Permission Card -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="14dp"
+                android:layout_marginTop="12dp"
                 android:background="@drawable/bg_glass_card"
                 android:orientation="vertical"
                 android:padding="16dp">
@@ -131,7 +142,7 @@
                     <ImageView
                         android:layout_width="24dp"
                         android:layout_height="24dp"
-                        android:contentDescription="Notification icon"
+                        android:contentDescription="@null"
                         android:src="@drawable/ic_shield"
                         app:tint="@color/electric_blue" />
 
@@ -142,7 +153,7 @@
                         android:layout_weight="1"
                         android:text="@string/perm_notifications_title"
                         android:textColor="@color/mf_text_primary"
-                        android:textSize="16sp"
+                        android:textSize="15sp"
                         android:textStyle="bold" />
 
                     <TextView
@@ -162,22 +173,23 @@
                     android:layout_marginTop="8dp"
                     android:text="@string/perm_notifications_desc"
                     android:textColor="@color/mf_text_secondary"
-                    android:textSize="13sp" />
+                    android:textSize="12.5sp" />
 
                 <Button
                     android:id="@+id/btn_grant_notifications"
                     style="@style/Widget.Material3.Button.TonalButton"
                     android:layout_width="wrap_content"
-                    android:layout_height="40dp"
-                    android:layout_marginTop="12dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:minHeight="48dp"
                     android:text="Allow Notifications" />
             </LinearLayout>
 
-            <!-- Camera Permission Card -->
+            <!-- 3. Foreground Service Requirements Card -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="14dp"
+                android:layout_marginTop="12dp"
                 android:background="@drawable/bg_glass_card"
                 android:orientation="vertical"
                 android:padding="16dp">
@@ -191,7 +203,129 @@
                     <ImageView
                         android:layout_width="24dp"
                         android:layout_height="24dp"
-                        android:contentDescription="Camera icon"
+                        android:contentDescription="@null"
+                        android:src="@drawable/ic_tune"
+                        app:tint="@color/electric_cyan" />
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="10dp"
+                        android:layout_weight="1"
+                        android:text="@string/perm_fgs_title"
+                        android:textColor="@color/mf_text_primary"
+                        android:textSize="15sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tv_status_fgs"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/bg_pill_chip"
+                        android:paddingHorizontal="10dp"
+                        android:paddingVertical="4dp"
+                        android:textSize="11sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="@string/perm_fgs_desc"
+                    android:textColor="@color/mf_text_secondary"
+                    android:textSize="12.5sp" />
+
+                <Button
+                    android:id="@+id/btn_open_notif_settings"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:minHeight="48dp"
+                    android:text="Service Notification Settings" />
+            </LinearLayout>
+
+            <!-- 4. Battery Optimization Status Card -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/bg_glass_card"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:contentDescription="@null"
+                        android:src="@drawable/ic_battery"
+                        app:tint="@color/electric_cyan" />
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="10dp"
+                        android:layout_weight="1"
+                        android:text="@string/perm_battery_title"
+                        android:textColor="@color/mf_text_primary"
+                        android:textSize="15sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tv_status_battery"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/bg_pill_chip"
+                        android:paddingHorizontal="10dp"
+                        android:paddingVertical="4dp"
+                        android:textSize="11sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="@string/perm_battery_desc"
+                    android:textColor="@color/mf_text_secondary"
+                    android:textSize="12.5sp" />
+
+                <Button
+                    android:id="@+id/btn_open_battery_settings"
+                    style="@style/Widget.Material3.Button.TonalButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:minHeight="48dp"
+                    android:text="Configure Battery Settings" />
+            </LinearLayout>
+
+            <!-- 5. Camera Permission Card (QR Scanner Only) -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/bg_glass_card"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:contentDescription="@null"
                         android:src="@drawable/ic_qr_scanner"
                         app:tint="@color/electric_cyan" />
 
@@ -202,7 +336,7 @@
                         android:layout_weight="1"
                         android:text="@string/perm_camera_title"
                         android:textColor="@color/mf_text_primary"
-                        android:textSize="16sp"
+                        android:textSize="15sp"
                         android:textStyle="bold" />
 
                     <TextView
@@ -222,30 +356,114 @@
                     android:layout_marginTop="8dp"
                     android:text="@string/perm_camera_desc"
                     android:textColor="@color/mf_text_secondary"
-                    android:textSize="13sp" />
+                    android:textSize="12.5sp" />
 
                 <LinearLayout
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
+                    android:layout_marginTop="10dp"
                     android:orientation="horizontal">
 
                     <Button
                         android:id="@+id/btn_grant_camera"
                         style="@style/Widget.Material3.Button.TonalButton"
                         android:layout_width="wrap_content"
-                        android:layout_height="40dp"
+                        android:layout_height="wrap_content"
+                        android:minHeight="48dp"
                         android:text="Allow Camera" />
 
                     <Button
                         android:id="@+id/btn_open_app_settings"
                         style="@style/Widget.Material3.Button.TextButton"
                         android:layout_width="wrap_content"
-                        android:layout_height="40dp"
+                        android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
+                        android:minHeight="48dp"
                         android:text="@string/perm_open_settings" />
                 </LinearLayout>
             </LinearLayout>
+
+            <!-- 6. Optional Music Notification Access -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/bg_glass_card"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:contentDescription="@null"
+                        android:src="@drawable/ic_music"
+                        app:tint="@color/electric_cyan" />
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="10dp"
+                        android:layout_weight="1"
+                        android:text="@string/perm_media_listener_title"
+                        android:textColor="@color/mf_text_primary"
+                        android:textSize="15sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tv_status_media_listener"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/bg_pill_chip"
+                        android:paddingHorizontal="10dp"
+                        android:paddingVertical="4dp"
+                        android:textSize="11sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="@string/perm_media_listener_desc"
+                    android:textColor="@color/mf_text_secondary"
+                    android:textSize="12.5sp" />
+
+                <Button
+                    android:id="@+id/btn_grant_media_listener"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:minHeight="48dp"
+                    android:text="Notification Access" />
+            </LinearLayout>
+
+            <!-- Honest Freeform Disclaimer -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:background="@drawable/bg_glass_card"
+                android:padding="12dp"
+                android:text="@string/perm_honest_disclaimer"
+                android:textColor="@color/mf_warning"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <Button
+                android:id="@+id/btn_perm_setup_center"
+                style="@style/Widget.Material3.Button.TonalButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:minHeight="48dp"
+                android:text="@string/btn_setup_center" />
         </LinearLayout>
     </ScrollView>
 
@@ -253,8 +471,9 @@
         android:id="@+id/btn_perm_continue"
         style="@style/Widget.Material3.Button"
         android:layout_width="match_parent"
-        android:layout_height="52dp"
+        android:layout_height="wrap_content"
         android:layout_margin="16dp"
+        android:minHeight="50dp"
         android:text="@string/perm_continue" />
 
 </LinearLayout>

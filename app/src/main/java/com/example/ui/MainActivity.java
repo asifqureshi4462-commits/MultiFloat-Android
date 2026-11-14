@@ -100,6 +100,15 @@ public class MainActivity extends AppCompatActivity {
         findViewById(R.id.btn_open_installed_apps).setOnClickListener(v ->
                 startActivity(new Intent(this, InstalledAppsActivity.class)));
 
+        findViewById(R.id.btn_dash_setup_center).setOnClickListener(v ->
+                startActivity(new Intent(this, MultitaskingSetupCenterActivity.class)));
+
+        findViewById(R.id.btn_dash_compat_test).setOnClickListener(v ->
+                startActivity(new Intent(this, CompatibilityTestActivity.class)));
+
+        findViewById(R.id.btn_dash_troubleshooting).setOnClickListener(v ->
+                startActivity(new Intent(this, TroubleshootingActivity.class)));
+
         findViewById(R.id.btn_dash_appearance).setOnClickListener(v ->
                 startActivity(new Intent(this, AppearanceSettingsActivity.class)));
 

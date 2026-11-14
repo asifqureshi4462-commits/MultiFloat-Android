@@ -316,10 +316,54 @@
             </LinearLayout>
 
             <!-- Navigation Shortcuts Grid -->
-            <LinearLayout
+            <Button
+                android:id="@+id/btn_dash_setup_center"
+                style="@style/Widget.Material3.Button.TonalButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="14dp"
+                android:minHeight="48dp"
+                android:text="@string/btn_setup_center"
+                android:textSize="13sp"
+                app:icon="@drawable/ic_tune" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/btn_dash_compat_test"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="6dp"
+                    android:layout_weight="1"
+                    android:maxLines="2"
+                    android:minHeight="48dp"
+                    android:paddingHorizontal="8dp"
+                    android:text="@string/btn_compatibility_test"
+                    android:textSize="12sp" />
+
+                <Button
+                    android:id="@+id/btn_dash_troubleshooting"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="6dp"
+                    android:layout_weight="1"
+                    android:maxLines="2"
+                    android:minHeight="48dp"
+                    android:paddingHorizontal="8dp"
+                    android:text="@string/btn_troubleshooting_center"
+                    android:textSize="12sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
                 android:orientation="horizontal">
 
                 <Button

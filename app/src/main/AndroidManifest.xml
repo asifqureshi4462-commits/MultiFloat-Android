@@ -51,6 +51,9 @@
         </activity>
 
         <activity android:name=".ui.OnboardingActivity" android:exported="false" />
+        <activity android:name=".ui.MultitaskingSetupCenterActivity" android:exported="false" />
+        <activity android:name=".ui.CompatibilityTestActivity" android:exported="false" />
+        <activity android:name=".ui.TroubleshootingActivity" android:exported="false" />
         <activity android:name=".ui.PermissionSetupActivity" android:exported="false" />
         <activity android:name=".ui.MainActivity" android:exported="false" android:launchMode="singleTop" />
         <activity android:name=".ui.FloatingToolsMenuActivity" android:exported="false" />

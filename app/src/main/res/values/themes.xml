@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.MultiFloat" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/electric_blue</item>
+        <item name="colorOnPrimary">@color/mf_on_accent</item>
+        <item name="colorSecondary">@color/electric_cyan</item>
+        <item name="colorOnSecondary">@color/mf_text_primary</item>
+        <item name="android:colorBackground">@color/mf_background</item>
+        <item name="colorSurface">@color/mf_surface</item>
+        <item name="colorOnSurface">@color/mf_text_primary</item>
+        <item name="colorSurfaceVariant">@color/mf_surface_variant</item>
+        <item name="colorOnSurfaceVariant">@color/mf_text_secondary</item>
+        <item name="colorOutline">@color/mf_card_stroke</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:fontFamily">@font/inter</item>
+    </style>
+
+    <style name="Theme.MultiFloat.Splash" parent="Theme.MultiFloat">
+        <item name="android:windowBackground">@color/mf_background</item>
+    </style>
+
+    <style name="TextAppearance.MultiFloat.Headline" parent="TextAppearance.Material3.HeadlineSmall">
+        <item name="fontFamily">@font/plus_jakarta_sans</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/mf_text_primary</item>
+    </style>
+
+    <style name="TextAppearance.MultiFloat.Title" parent="TextAppearance.Material3.TitleMedium">
+        <item name="fontFamily">@font/plus_jakarta_sans</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/mf_text_primary</item>
+    </style>
+
+    <style name="TextAppearance.MultiFloat.Mono" parent="TextAppearance.Material3.BodyMedium">
+        <item name="fontFamily">@font/jetbrains_mono</item>
+        <item name="android:textColor">@color/mf_text_primary</item>
+    </style>
+</resources>

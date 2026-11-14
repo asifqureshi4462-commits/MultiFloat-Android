@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/sidebar_settings_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/bg_gradient_navy"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:padding="14dp">
+
+        <ImageButton
+            android:id="@+id/btn_sb_set_back"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/cd_back"
+            android:src="@drawable/ic_back"
+            app:tint="@color/mf_text_primary" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:fontFamily="@font/plus_jakarta_sans"
+            android:text="@string/btn_sidebar_settings"
+            android:textColor="@color/mf_text_primary"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="18dp">
+
+            <com.google.android.material.materialswitch.MaterialSwitch
+                android:id="@+id/switch_sb_enabled"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Enable Edge Sidebar"
+                android:textColor="@color/mf_text_primary" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="Sidebar Edge Position"
+                android:textColor="@color/mf_text_primary"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <RadioGroup
+                android:id="@+id/rg_sb_side"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:orientation="horizontal">
+
+                <RadioButton
+                    android:id="@+id/rb_sb_left"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Left Edge"
+                    android:textColor="@color/mf_text_primary" />
+
+                <RadioButton
+                    android:id="@+id/rb_sb_right"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Right Edge"
+                    android:textColor="@color/mf_text_primary" />
+            </RadioGroup>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="Sidebar Size"
+                android:textColor="@color/mf_text_primary"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <RadioGroup
+                android:id="@+id/rg_sb_size"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:orientation="horizontal">
+
+                <RadioButton android:id="@+id/rb_sb_compact" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Compact" android:textColor="@color/mf_text_primary" />
+                <RadioButton android:id="@+id/rb_sb_standard" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Standard" android:textColor="@color/mf_text_primary" />
+                <RadioButton android:id="@+id/rb_sb_large" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Large" android:textColor="@color/mf_text_primary" />
+            </RadioGroup>
+
+            <TextView
+                android:id="@+id/tv_sb_opacity_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="Sidebar Opacity: 92%"
+                android:textColor="@color/mf_text_primary"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <SeekBar
+                android:id="@+id/seek_sb_opacity"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:max="60" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:text="Pinned Favorite Tools (Shown at Top of Sidebar)"
+                android:textColor="@color/mf_text_primary"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/cg_sb_favorites"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp" />
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>

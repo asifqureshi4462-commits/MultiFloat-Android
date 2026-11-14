@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="12dp">
+
+        <!-- Missing API Config Banner -->
+        <LinearLayout
+            android:id="@+id/banner_translate_config"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:background="@drawable/bg_glass_card"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:padding="10dp"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Translation API key not set. Configure in Settings."
+                android:textColor="@color/mf_warning"
+                android:textSize="12sp" />
+
+            <Button
+                android:id="@+id/btn_translate_open_settings"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:text="Setup"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <!-- Language Selectors -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <Spinner
+                android:id="@+id/spinner_source_lang"
+                android:layout_width="0dp"
+                android:layout_height="40dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg_glass_card"
+                android:paddingHorizontal="8dp" />
+
+            <ImageButton
+                android:id="@+id/btn_swap_langs"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginHorizontal="6dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Swap languages"
+                android:src="@drawable/ic_swap"
+                app:tint="@color/electric_cyan" />
+
+            <Spinner
+                android:id="@+id/spinner_target_lang"
+                android:layout_width="0dp"
+                android:layout_height="40dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg_glass_card"
+                android:paddingHorizontal="8dp" />
+        </LinearLayout>
+
+        <EditText
+            android:id="@+id/et_translate_input"
+            android:layout_width="match_parent"
+            android:layout_height="110dp"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/bg_glass_card"
+            android:gravity="top|start"
+            android:hint="Enter text to translate..."
+            android:inputType="textMultiLine"
+            android:padding="10dp"
+            android:textColor="@color/mf_text_primary"
+            android:textColorHint="@color/mf_text_muted"
+            android:textSize="14sp" />
+
+        <Button
+            android:id="@+id/btn_do_translate"
+            style="@style/Widget.Material3.Button"
+            android:layout_width="match_parent"
+            android:layout_height="44dp"
+            android:layout_marginTop="8dp"
+            android:text="Translate" />
+
+        <ProgressBar
+            android:id="@+id/pb_translate"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:layout_gravity="center"
+            android:layout_marginTop="6dp"
+            android:visibility="gone" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/bg_glass_card_accent"
+            android:orientation="vertical"
+            android:padding="12dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Translation Output"
+                    android:textColor="@color/electric_cyan"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+
+                <ImageButton
+                    android:id="@+id/btn_copy_translation"
+                    android:layout_width="34dp"
+                    android:layout_height="34dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Copy translation"
+                    android:src="@drawable/ic_copy"
+                    app:tint="@color/electric_cyan" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/tv_translate_output"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:minHeight="64dp"
+                android:text="Translated text will appear here."
+                android:textColor="@color/mf_text_primary"
+                android:textSize="14sp" />
+        </LinearLayout>
+    </LinearLayout>
+</ScrollView>

@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/general_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/bg_gradient_navy"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:padding="14dp">
+
+        <ImageButton
+            android:id="@+id/btn_gen_set_back"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/cd_back"
+            android:src="@drawable/ic_back"
+            app:tint="@color/mf_text_primary" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:fontFamily="@font/plus_jakarta_sans"
+            android:text="@string/btn_general_settings"
+            android:textColor="@color/mf_text_primary"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="18dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Window Behavior"
+                android:textColor="@color/electric_cyan"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+
+            <com.google.android.material.materialswitch.MaterialSwitch
+                android:id="@+id/switch_edge_snap"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:text="Snap Windows to Screen Edges"
+                android:textColor="@color/mf_text_primary" />
+
+            <com.google.android.material.materialswitch.MaterialSwitch
+                android:id="@+id/switch_remember_pos"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Remember Previous Window Positions"
+                android:textColor="@color/mf_text_primary" />
+
+            <com.google.android.material.materialswitch.MaterialSwitch
+                android:id="@+id/switch_restore_session"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Auto-Restore Windows on Engine Start"
+                android:textColor="@color/mf_text_primary" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="Mini Browser Home URL"
+                android:textColor="@color/mf_text_primary"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+
+            <EditText
+                android:id="@+id/et_browser_home"
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:layout_marginTop="6dp"
+                android:background="@drawable/bg_glass_card"
+                android:inputType="textUri"
+                android:paddingHorizontal="12dp"
+                android:textColor="@color/mf_text_primary"
+                android:textSize="13sp" />
+
+            <!-- AI Assistant API Configuration -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:background="@drawable/bg_glass_card_accent"
+                android:orientation="vertical"
+                android:padding="14dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="AI Assistant API Configuration"
+                    android:textColor="@color/electric_cyan"
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="Keys are encrypted on-device using Android KeyStore AES-GCM."
+                    android:textColor="@color/mf_text_secondary"
+                    android:textSize="11sp" />
+
+                <RadioGroup
+                    android:id="@+id/rg_ai_provider"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:orientation="horizontal">
+
+                    <RadioButton android:id="@+id/rb_ai_gemini" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Gemini API" android:textColor="@color/mf_text_primary" />
+                    <RadioButton android:id="@+id/rb_ai_openai" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="OpenAI Compatible" android:textColor="@color/mf_text_primary" />
+                </RadioGroup>
+
+                <EditText
+                    android:id="@+id/et_ai_model"
+                    android:layout_width="match_parent"
+                    android:layout_height="42dp"
+                    android:layout_marginTop="8dp"
+                    android:background="@drawable/bg_glass_card"
+                    android:hint="Model (e.g., gemini-2.5-flash)"
+                    android:inputType="text"
+                    android:paddingHorizontal="12dp"
+                    android:textColor="@color/mf_text_primary"
+                    android:textColorHint="@color/mf_text_muted"
+                    android:textSize="13sp" />
+
+                <EditText
+                    android:id="@+id/et_ai_endpoint"
+                    android:layout_width="match_parent"
+                    android:layout_height="42dp"
+                    android:layout_marginTop="8dp"
+                    android:background="@drawable/bg_glass_card"
+                    android:hint="Custom endpoint (for OpenAI-compatible)"
+                    android:inputType="textUri"
+                    android:paddingHorizontal="12dp"
+                    android:textColor="@color/mf_text_primary"
+                    android:textColorHint="@color/mf_text_muted"
+                    android:textSize="13sp" />
+
+                <EditText
+                    android:id="@+id/et_ai_api_key"
+                    android:layout_width="match_parent"
+                    android:layout_height="42dp"
+                    android:layout_marginTop="8dp"
+                    android:background="@drawable/bg_glass_card"
+                    android:hint="Enter AI API Key"
+                    android:inputType="textPassword"
+                    android:paddingHorizontal="12dp"
+                    android:textColor="@color/mf_text_primary"
+                    android:textColorHint="@color/mf_text_muted"
+                    android:textSize="13sp" />
+            </LinearLayout>
+
+            <!-- Translation API Configuration -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:background="@drawable/bg_glass_card"
+                android:orientation="vertical"
+                android:padding="14dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Translator API Configuration"
+                    android:textColor="@color/mf_text_primary"
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
+
+                <EditText
+                    android:id="@+id/et_translate_endpoint"
+                    android:layout_width="match_parent"
+                    android:layout_height="42dp"
+                    android:layout_marginTop="8dp"
+                    android:background="@drawable/bg_glass_card"
+                    android:hint="Google Translate v2 or LibreTranslate URL"
+                    android:inputType="textUri"
+                    android:paddingHorizontal="12dp"
+                    android:textColor="@color/mf_text_primary"
+                    android:textColorHint="@color/mf_text_muted"
+                    android:textSize="13sp" />
+
+                <EditText
+                    android:id="@+id/et_translate_api_key"
+                    android:layout_width="match_parent"
+                    android:layout_height="42dp"
+                    android:layout_marginTop="8dp"
+                    android:background="@drawable/bg_glass_card"
+                    android:hint="Translation API Key (if required)"
+                    android:inputType="textPassword"
+                    android:paddingHorizontal="12dp"
+                    android:textColor="@color/mf_text_primary"
+                    android:textColorHint="@color/mf_text_muted"
+                    android:textSize="13sp" />
+            </LinearLayout>
+
+            <Button
+                android:id="@+id/btn_save_general_settings"
+                style="@style/Widget.Material3.Button"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:layout_marginTop="18dp"
+                android:text="Save Settings &amp; Encrypted Keys" />
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>

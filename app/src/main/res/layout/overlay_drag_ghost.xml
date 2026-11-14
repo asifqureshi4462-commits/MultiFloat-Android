@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/drag_ghost_card"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_drag_ghost"
+    android:elevation="18dp"
+    android:gravity="center_vertical"
+    android:minWidth="168dp"
+    android:orientation="horizontal"
+    android:paddingHorizontal="14dp"
+    android:paddingVertical="10dp">
+
+    <FrameLayout
+        android:layout_width="36dp"
+        android:layout_height="36dp"
+        android:background="@drawable/bg_button_electric">
+
+        <ImageView
+            android:id="@+id/iv_drag_ghost_icon"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_gravity="center"
+            android:contentDescription="@string/cd_drawer_tool_icon"
+            app:tint="@color/mf_on_accent" />
+    </FrameLayout>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="10dp"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/tv_drag_ghost_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/plus_jakarta_sans"
+            android:maxLines="1"
+            android:textColor="@color/mf_text_primary"
+            android:textSize="13sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tv_drag_ghost_hint"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="1dp"
+            android:maxLines="1"
+            android:text="@string/drawer_drag_hint_move"
+            android:textColor="@color/electric_cyan"
+            android:textSize="10sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+</LinearLayout>

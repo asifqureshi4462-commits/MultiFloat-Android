@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginVertical="4dp"
+    android:background="@drawable/bg_drawer_item"
+    android:clickable="true"
+    android:focusable="true"
+    android:gravity="center_vertical"
+    android:minHeight="52dp"
+    android:orientation="horizontal"
+    android:paddingHorizontal="10dp"
+    android:paddingVertical="8dp">
+
+    <FrameLayout
+        android:layout_width="34dp"
+        android:layout_height="34dp"
+        android:background="@drawable/bg_pill_chip">
+
+        <ImageView
+            android:id="@+id/iv_drawer_tool_icon"
+            android:layout_width="19dp"
+            android:layout_height="19dp"
+            android:layout_gravity="center"
+            android:contentDescription="@string/cd_drawer_tool_icon"
+            app:tint="@color/electric_cyan" />
+    </FrameLayout>
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="9dp"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/tv_drawer_tool_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:fontFamily="@font/plus_jakarta_sans"
+            android:maxLines="1"
+            android:textColor="@color/mf_text_primary"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tv_drawer_tool_cat"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textColor="@color/mf_text_secondary"
+            android:textSize="10sp" />
+    </LinearLayout>
+
+    <ImageView
+        android:id="@+id/iv_drawer_drag_grip"
+        android:layout_width="18dp"
+        android:layout_height="18dp"
+        android:layout_marginStart="4dp"
+        android:contentDescription="@string/cd_drawer_drag_grip"
+        android:src="@drawable/ic_drag_handle"
+        app:tint="@color/mf_text_muted" />
+</LinearLayout>

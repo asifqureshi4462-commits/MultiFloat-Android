@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/appearance_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/bg_gradient_navy"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:padding="14dp">
+
+        <ImageButton
+            android:id="@+id/btn_app_set_back"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/cd_back"
+            android:src="@drawable/ic_back"
+            app:tint="@color/mf_text_primary" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:fontFamily="@font/plus_jakarta_sans"
+            android:text="@string/btn_appearance"
+            android:textColor="@color/mf_text_primary"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="18dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Theme Mode"
+                android:textColor="@color/mf_text_primary"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <RadioGroup
+                android:id="@+id/rg_theme_mode"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:orientation="horizontal">
+
+                <RadioButton android:id="@+id/rb_theme_dark" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Dark" android:textColor="@color/mf_text_primary" />
+                <RadioButton android:id="@+id/rb_theme_light" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Light" android:textColor="@color/mf_text_primary" />
+                <RadioButton android:id="@+id/rb_theme_system" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="System" android:textColor="@color/mf_text_primary" />
+            </RadioGroup>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="Window Border Accent Color"
+                android:textColor="@color/mf_text_primary"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/cg_accent_colors"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                app:singleSelection="true">
+
+                <com.google.android.material.chip.Chip android:id="@+id/chip_accent_blue" style="@style/Widget.Material3.Chip.Filter" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Electric Blue" />
+                <com.google.android.material.chip.Chip android:id="@+id/chip_accent_cyan" style="@style/Widget.Material3.Chip.Filter" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Cyan Glow" />
+                <com.google.android.material.chip.Chip android:id="@+id/chip_accent_emerald" style="@style/Widget.Material3.Chip.Filter" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Emerald" />
+                <com.google.android.material.chip.Chip android:id="@+id/chip_accent_violet" style="@style/Widget.Material3.Chip.Filter" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Violet" />
+                <com.google.android.material.chip.Chip android:id="@+id/chip_accent_amber" style="@style/Widget.Material3.Chip.Filter" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Amber" />
+            </com.google.android.material.chip.ChipGroup>
+
+            <TextView
+                android:id="@+id/tv_bubble_size_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="Floating Bubble Size: 56dp"
+                android:textColor="@color/mf_text_primary"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <SeekBar android:id="@+id/seek_bubble_size" android:layout_width="match_parent" android:layout_height="wrap_content" android:max="44" />
+
+            <TextView
+                android:id="@+id/tv_bubble_alpha_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:text="Floating Bubble Opacity: 95%"
+                android:textColor="@color/mf_text_primary"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <SeekBar android:id="@+id/seek_bubble_alpha" android:layout_width="match_parent" android:layout_height="wrap_content" android:max="70" />
+
+            <TextView
+                android:id="@+id/tv_window_alpha_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:text="Default Window Opacity: 94%"
+                android:textColor="@color/mf_text_primary"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <SeekBar android:id="@+id/seek_window_alpha" android:layout_width="match_parent" android:layout_height="wrap_content" android:max="60" />
+
+            <TextView
+                android:id="@+id/tv_window_radius_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:text="Window Corner Radius: 20dp"
+                android:textColor="@color/mf_text_primary"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <SeekBar android:id="@+id/seek_window_radius" android:layout_width="match_parent" android:layout_height="wrap_content" android:max="32" />
+
+            <TextView
+                android:id="@+id/tv_window_scale_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:text="Default Window Size: 100%"
+                android:textColor="@color/mf_text_primary"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <SeekBar android:id="@+id/seek_window_scale" android:layout_width="match_parent" android:layout_height="wrap_content" android:max="55" />
+
+            <com.google.android.material.materialswitch.MaterialSwitch
+                android:id="@+id/switch_window_anim"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:text="Smooth Window Open/Close Animations"
+                android:textColor="@color/mf_text_primary" />
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>

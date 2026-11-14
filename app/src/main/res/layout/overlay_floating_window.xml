@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/window_frame"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:elevation="14dp"
+    android:padding="2dp">
+
+    <LinearLayout
+        android:id="@+id/window_card_inner"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <!-- Draggable Title Bar -->
+        <LinearLayout
+            android:id="@+id/window_title_bar"
+            android:layout_width="match_parent"
+            android:layout_height="44dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="10dp">
+
+            <View
+                android:id="@+id/view_focus_dot"
+                android:layout_width="8dp"
+                android:layout_height="8dp"
+                android:background="@drawable/bg_floating_bubble" />
+
+            <ImageView
+                android:id="@+id/iv_window_icon"
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:layout_marginStart="8dp"
+                android:contentDescription="Tool icon"
+                app:tint="@color/electric_cyan" />
+
+            <TextView
+                android:id="@+id/tv_window_title"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:layout_weight="1"
+                android:ellipsize="end"
+                android:fontFamily="@font/plus_jakarta_sans"
+                android:maxLines="1"
+                android:text="Window"
+                android:textColor="@color/mf_text_primary"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+
+            <ImageButton
+                android:id="@+id/btn_win_opacity"
+                android:layout_width="34dp"
+                android:layout_height="34dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/cd_window_opacity"
+                android:src="@drawable/ic_opacity"
+                app:tint="@color/mf_text_secondary" />
+
+            <ImageButton
+                android:id="@+id/btn_win_minimize"
+                android:layout_width="34dp"
+                android:layout_height="34dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/cd_minimize_window"
+                android:src="@drawable/ic_minimize"
+                app:tint="@color/mf_text_primary" />
+
+            <ImageButton
+                android:id="@+id/btn_win_maximize"
+                android:layout_width="34dp"
+                android:layout_height="34dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/cd_maximize_window"
+                android:src="@drawable/ic_maximize"
+                app:tint="@color/mf_text_primary" />
+
+            <ImageButton
+                android:id="@+id/btn_win_close"
+                android:layout_width="34dp"
+                android:layout_height="34dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/cd_close_window"
+                android:src="@drawable/ic_close"
+                app:tint="@color/mf_error" />
+        </LinearLayout>
+
+        <!-- Inline Transparency Slider Toolbar -->
+        <LinearLayout
+            android:id="@+id/panel_win_opacity_bar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="4dp"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Opacity"
+                android:textColor="@color/mf_text_secondary"
+                android:textSize="11sp" />
+
+            <SeekBar
+                android:id="@+id/seek_win_opacity"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:max="65"
+                android:progress="55" />
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/mf_divider" />
+
+        <!-- Mini-App Content Container -->
+        <FrameLayout
+            android:id="@+id/window_content_container"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <!-- Bottom Status & Resize Handle Bar -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="22dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="8dp">
+
+            <TextView
+                android:id="@+id/tv_win_hint"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Drag title to move • Drag corner to resize"
+                android:textColor="@color/mf_text_muted"
+                android:textSize="9sp" />
+
+            <ImageView
+                android:id="@+id/iv_resize_handle"
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:contentDescription="@string/cd_resize_window"
+                android:padding="3dp"
+                android:src="@drawable/ic_resize"
+                app:tint="@color/electric_cyan" />
+        </LinearLayout>
+    </LinearLayout>
+</FrameLayout>

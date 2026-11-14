@@ -1,0 +1,6 @@
+{
+  "name": "MultiFloat",
+  "description": "Smart Android multitasking platform with draggable, resizable floating windows, edge sidebar, and 12 built-in productivity mini-apps.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center"
+    android:orientation="vertical"
+    android:padding="12dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_glass_card_accent"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:padding="12dp">
+
+        <ImageView
+            android:layout_width="42dp"
+            android:layout_height="42dp"
+            android:background="@drawable/bg_floating_bubble"
+            android:contentDescription="Music icon"
+            android:padding="9dp"
+            android:src="@drawable/ic_music" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tv_music_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text="System Media Controls"
+                android:textColor="@color/mf_text_primary"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tv_music_artist"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text="Control active media playback"
+                android:textColor="@color/mf_text_secondary"
+                android:textSize="12sp" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="14dp"
+        android:gravity="center"
+        android:orientation="horizontal">
+
+        <ImageButton
+            android:id="@+id/btn_media_prev"
+            android:layout_width="52dp"
+            android:layout_height="52dp"
+            android:background="@drawable/bg_glass_card"
+            android:contentDescription="Previous track"
+            android:src="@drawable/ic_skip_prev"
+            app:tint="@color/mf_text_primary" />
+
+        <ImageButton
+            android:id="@+id/btn_media_play_pause"
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:layout_marginHorizontal="18dp"
+            android:background="@drawable/bg_floating_bubble"
+            android:contentDescription="Play or Pause"
+            android:src="@drawable/ic_play"
+            app:tint="@color/mf_on_accent" />
+
+        <ImageButton
+            android:id="@+id/btn_media_next"
+            android:layout_width="52dp"
+            android:layout_height="52dp"
+            android:background="@drawable/bg_glass_card"
+            android:contentDescription="Next track"
+            android:src="@drawable/ic_skip_next"
+            app:tint="@color/mf_text_primary" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:gravity="center"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/btn_vol_down"
+            style="@style/Widget.Material3.Button.TonalButton"
+            android:layout_width="0dp"
+            android:layout_height="38dp"
+            android:layout_marginEnd="6dp"
+            android:layout_weight="1"
+            android:text="Vol −"
+            android:textSize="12sp" />
+
+        <Button
+            android:id="@+id/btn_vol_up"
+            style="@style/Widget.Material3.Button.TonalButton"
+            android:layout_width="0dp"
+            android:layout_height="38dp"
+            android:layout_marginStart="6dp"
+            android:layout_weight="1"
+            android:text="Vol +"
+            android:textSize="12sp" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/btn_enable_media_listener"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:padding="4dp"
+        android:text="Enable Now Playing track metadata →"
+        android:textColor="@color/electric_cyan"
+        android:textSize="11sp"
+        android:textStyle="bold" />
+</LinearLayout>

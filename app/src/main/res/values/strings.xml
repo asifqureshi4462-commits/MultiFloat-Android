@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">MultiFloat</string>
+    <string name="app_tagline">Multiple Tools. One Screen. Smarter Multitasking.</string>
+    <string name="app_version">1.0.0</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_title_1">Desktop-Style Floating Windows</string>
+    <string name="onboarding_desc_1">Launch multiple draggable, resizable glassmorphic mini-apps simultaneously over any screen with smooth edge snapping.</string>
+    <string name="onboarding_title_2">12 Built-In Productivity Tools</string>
+    <string name="onboarding_desc_2">Scientific calculator, auto-saving notes, mini browser, QR scanner, stopwatch, to-do list, AI assistant, translator, and more.</string>
+    <string name="onboarding_title_3">Intelligent Edge Sidebar</string>
+    <string name="onboarding_desc_3">Access favorite tools, recent windows, flashlight, and quick settings with a single swipe from either screen edge.</string>
+    <string name="action_skip">Skip</string>
+    <string name="action_next">Next</string>
+    <string name="action_get_started">Get Started</string>
+
+    <!-- Permissions -->
+    <string name="perm_screen_title">System Permissions</string>
+    <string name="perm_screen_subtitle">MultiFloat uses transparent, least-privilege permissions so floating windows work reliably across your device.</string>
+    <string name="perm_overlay_title">Display Over Other Apps</string>
+    <string name="perm_overlay_desc">Required by Android to render floating bubbles, the edge sidebar, and resizable mini-app windows above other apps.</string>
+    <string name="perm_notifications_title">Service Notifications</string>
+    <string name="perm_notifications_desc">Keeps the floating window engine active in the background and provides instant notification controls to show, hide, or close windows.</string>
+    <string name="perm_camera_title">Camera Access</string>
+    <string name="perm_camera_desc">Used strictly on-device for the QR Code Scanner mini-app and the sidebar Flashlight toggle.</string>
+    <string name="perm_granted">Granted</string>
+    <string name="perm_needed">Action Needed</string>
+    <string name="perm_denied">Denied</string>
+    <string name="perm_grant_action">Grant</string>
+    <string name="perm_open_settings">App Settings</string>
+    <string name="perm_continue">Continue to Dashboard</string>
+
+    <!-- Dashboard -->
+    <string name="welcome_title">Command Center</string>
+    <string name="welcome_subtitle">Launch floating utilities or customize your workspace.</string>
+    <string name="launch_floating_engine">Start Floating Engine</string>
+    <string name="stop_floating_engine">Stop Floating Engine</string>
+    <string name="active_windows_label">Active Windows</string>
+    <string name="engine_status_running">Engine Running</string>
+    <string name="engine_status_idle">Engine Idle</string>
+    <string name="section_quick_tools">Quick Launch Tools</string>
+    <string name="section_favorites">Favorite Tools</string>
+    <string name="section_recent">Recently Opened</string>
+    <string name="section_quick_settings">Quick Controls</string>
+    <string name="toggle_bubble">Floating Bubble</string>
+    <string name="toggle_sidebar">Edge Sidebar</string>
+    <string name="btn_tools_menu">All Floating Tools</string>
+    <string name="btn_window_manager">Window Manager</string>
+    <string name="btn_appearance">Appearance</string>
+    <string name="btn_sidebar_settings">Sidebar Config</string>
+    <string name="btn_general_settings">General &amp; APIs</string>
+    <string name="btn_permissions">Permissions</string>
+    <string name="btn_privacy">Privacy Info</string>
+    <string name="btn_about">About MultiFloat</string>
+
+    <!-- Notification -->
+    <string name="notif_channel_name">MultiFloat Window Engine</string>
+    <string name="notif_channel_desc">Keeps floating windows and sidebar responsive</string>
+    <string name="notif_title">MultiFloat Engine Active</string>
+    <string name="notif_text">%d active window(s) • Tap to open dashboard</string>
+    <string name="notif_action_toggle_bubble">Toggle Bubble</string>
+    <string name="notif_action_minimize_all">Minimize All</string>
+    <string name="notif_action_close_all">Close All</string>
+    <string name="notif_action_stop">Stop</string>
+
+    <!-- Tool Names -->
+    <string name="tool_calculator">Calculator</string>
+    <string name="tool_notes">Quick Notes</string>
+    <string name="tool_browser">Mini Browser</string>
+    <string name="tool_stopwatch">Stopwatch &amp; Timer</string>
+    <string name="tool_clock">Digital Clock</string>
+    <string name="tool_text_editor">Text Editor</string>
+    <string name="tool_clipboard">Clipboard</string>
+    <string name="tool_todo">To-Do List</string>
+    <string name="tool_qr">QR Scanner</string>
+    <string name="tool_translator">Translator</string>
+    <string name="tool_ai">AI Assistant</string>
+    <string name="tool_music">Music Controls</string>
+
+    <!-- Window Controls -->
+    <string name="cd_app_logo">MultiFloat logo</string>
+    <string name="cd_minimize_window">Minimize window</string>
+    <string name="cd_maximize_window">Maximize or restore window</string>
+    <string name="cd_close_window">Close window</string>
+    <string name="cd_window_opacity">Adjust window transparency</string>
+    <string name="cd_resize_window">Resize window</string>
+    <string name="cd_floating_bubble">MultiFloat bubble launcher</string>
+    <string name="cd_sidebar_handle">Open MultiFloat sidebar</string>
+    <string name="cd_back">Navigate back</string>
+    <string name="cd_drawer_tool_icon">Mini-app icon</string>
+    <string name="cd_drawer_drag_grip">Drag mini-app onto screen</string>
+
+    <!-- Slide-out Drawer Sidebar -->
+    <string name="drawer_title">Mini-Apps Drawer</string>
+    <string name="drawer_subtitle">Drag onto screen or tap</string>
+    <string name="drawer_filter_all">All</string>
+    <string name="drawer_filter_productivity">Productivity</string>
+    <string name="drawer_filter_favorites">★ Favs</string>
+    <string name="drawer_drag_hint_move">Drag onto screen</string>
+    <string name="drawer_drag_hint_release">Release to launch here</string>
+    <string name="drawer_open_shortcut">Open Slide-Out Drawer</string>
+</resources>

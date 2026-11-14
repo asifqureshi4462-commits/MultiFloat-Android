@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginVertical="5dp"
+    android:background="@drawable/bg_glass_card"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:padding="12dp">
+
+    <ImageView
+        android:id="@+id/iv_ws_icon"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:contentDescription="Window icon"
+        app:tint="@color/electric_cyan" />
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/tv_ws_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/mf_text_primary"
+            android:textSize="15sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tv_ws_state"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/electric_cyan"
+            android:textSize="11sp" />
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/btn_ws_focus_restore"
+        style="@style/Widget.Material3.Button.TonalButton"
+        android:layout_width="wrap_content"
+        android:layout_height="36dp"
+        android:minWidth="0dp"
+        android:paddingHorizontal="10dp"
+        android:text="Focus"
+        android:textSize="11sp" />
+
+    <ImageButton
+        android:id="@+id/btn_ws_minimize"
+        android:layout_width="38dp"
+        android:layout_height="38dp"
+        android:layout_marginStart="4dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@string/cd_minimize_window"
+        android:src="@drawable/ic_minimize"
+        app:tint="@color/mf_text_primary" />
+
+    <ImageButton
+        android:id="@+id/btn_ws_close"
+        android:layout_width="38dp"
+        android:layout_height="38dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@string/cd_close_window"
+        android:src="@drawable/ic_close"
+        app:tint="@color/mf_error" />
+</LinearLayout>

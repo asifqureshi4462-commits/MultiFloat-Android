@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Brand & Accents -->
+    <color name="electric_blue">#2979FF</color>
+    <color name="electric_blue_dark">#1D5CE5</color>
+    <color name="electric_cyan">#00B8D4</color>
+    <color name="cyan_glow">#00E5FF</color>
+    <color name="emerald_accent">#10B981</color>
+    <color name="violet_accent">#8B5CF6</color>
+    <color name="amber_accent">#F59E0B</color>
+
+    <!-- Light Mode Surfaces -->
+    <color name="mf_background">#F4F7FC</color>
+    <color name="mf_surface">#FFFFFF</color>
+    <color name="mf_surface_variant">#EAF0FA</color>
+    <color name="mf_card_glass">#F2FFFFFF</color>
+    <color name="mf_card_stroke">#D4E0F2</color>
+    <color name="mf_window_bg">#F7FFFFFF</color>
+    <color name="mf_window_header">#EEF4FD</color>
+
+    <!-- Light Mode Text -->
+    <color name="mf_text_primary">#0F172A</color>
+    <color name="mf_text_secondary">#475569</color>
+    <color name="mf_text_muted">#64748B</color>
+
+    <!-- Status -->
+    <color name="mf_success">#10B981</color>
+    <color name="mf_warning">#F59E0B</color>
+    <color name="mf_error">#EF4444</color>
+    <color name="mf_on_accent">#FFFFFF</color>
+    <color name="mf_divider">#E2E8F0</color>
+</resources>

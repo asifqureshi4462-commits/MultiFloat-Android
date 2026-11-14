@@ -7,6 +7,7 @@ import android.content.pm.PackageManager;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.os.Build;
+import android.util.Log;
 import android.provider.Settings;
 import android.view.WindowManager;
 import androidx.annotation.Nullable;
@@ -33,11 +34,45 @@ public final class ExternalAppLauncher {
 
     private ExternalAppLauncher() {}
 
+    private static final String TAG = "ExternalAppLauncher";
+
+    /** Hidden-API value of WindowConfiguration.WINDOWING_MODE_FREEFORM. */
+    private static final int WINDOWING_MODE_FREEFORM = 5;
+
     public static boolean isFreeformSupported(Context context) {
         if (context == null) return false;
         PackageManager pm = context.getPackageManager();
         if (pm == null) return false;
         return pm.hasSystemFeature(PackageManager.FEATURE_FREEFORM_WINDOW_MANAGEMENT);
+    }
+
+    /** True when the "Enable freeform windows" developer option is switched on. */
+    public static boolean isDeveloperFreeformEnabled(Context context) {
+        if (context == null) return false;
+        try {
+            return Settings.Global.getInt(context.getContentResolver(), "enable_freeform_support", 0) == 1;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /** Freeform launch is worth attempting if the system feature or the developer toggle is present. */
+    public static boolean canAttemptFreeform(Context context) {
+        return isFreeformSupported(context) || isDeveloperFreeformEnabled(context);
+    }
+
+    /**
+     * Asks the system to open the activity in freeform mode. Without an explicit windowing
+     * mode, setLaunchBounds() is ignored on fullscreen displays and the app opens full screen.
+     * The method is a hidden API, so it is called through reflection and failures are ignored.
+     */
+    private static void requestFreeformWindowingMode(ActivityOptions options) {
+        try {
+            java.lang.reflect.Method m = ActivityOptions.class.getMethod("setLaunchWindowingMode", int.class);
+            m.invoke(options, WINDOWING_MODE_FREEFORM);
+        } catch (Throwable t) {
+            Log.w(TAG, "setLaunchWindowingMode not available: " + t);
+        }
     }
 
     public static Rect computeDefaultFreeformBounds(Context context, @Nullable Point dropCenter) {
@@ -76,7 +111,7 @@ public final class ExternalAppLauncher {
             return LaunchStatus.APP_UNINSTALLED;
         }
 
-        boolean freeformSupported = isFreeformSupported(context);
+        boolean freeformSupported = canAttemptFreeform(context);
         if (!freeformSupported && !allowNormalFallback) {
             return LaunchStatus.FREEFORM_UNSUPPORTED;
         }
@@ -87,13 +122,13 @@ public final class ExternalAppLauncher {
             try {
                 Intent freeformIntent = new Intent(launchIntent);
                 freeformIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK
-                        | Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT
                         | Intent.FLAG_ACTIVITY_MULTIPLE_TASK);
                 ActivityOptions options = ActivityOptions.makeBasic();
                 Rect bounds = preferredBounds != null
                         ? preferredBounds
                         : computeDefaultFreeformBounds(context, null);
                 options.setLaunchBounds(bounds);
+                requestFreeformWindowingMode(options);
                 context.startActivity(freeformIntent, options.toBundle());
                 return LaunchStatus.LAUNCHED_FREEFORM;
             } catch (Exception e) {

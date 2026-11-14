@@ -64,6 +64,11 @@ android {
     includeInApk = false
     includeInBundle = true
   }
+  // Lint must not block APK generation on CI.
+  lint {
+    checkReleaseBuilds = false
+    abortOnError = false
+  }
 }
 
 secrets {

@@ -189,12 +189,15 @@ public class FloatingWindowService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        // startForegroundService() requires startForeground() to be called quickly, otherwise
+        // Android 12+ kills the app. So always promote first, then stop if overlay is missing.
+        startAsForeground();
         if (!PermissionHelper.canDrawOverlays(this)) {
+            stopForeground(STOP_FOREGROUND_REMOVE);
             stopSelf();
             return START_NOT_STICKY;
         }
 
-        startAsForeground();
         FloatingEngineBus.updateRunning(true);
 
         if (bubbleView == null && preferences.isBubbleEnabled()) {
@@ -941,7 +944,7 @@ public class FloatingWindowService extends Service {
                 }
                 label.setText(info.appName);
                 String prefix = info.isFavorite ? "★ App" : "App";
-                cat.setText(prefix + (ExternalAppLauncher.isFreeformSupported(this) ? " • Freeform" : " • Shortcut"));
+                cat.setText(prefix + (ExternalAppLauncher.canAttemptFreeform(this) ? " • Freeform" : " • Shortcut"));
                 attachDrawerShortcutGesture(item, sc, info, scrollView, panel);
             } else if (sc.toolType != null) {
                 ToolType t = sc.toolType;
@@ -1091,8 +1094,8 @@ public class FloatingWindowService extends Service {
             } else if (status == ExternalAppLauncher.LaunchStatus.LAUNCHED_NORMAL) {
                 Toast.makeText(this,
                         "Opened " + (appInfo != null ? appInfo.appName : shortcut.packageName)
-                                + " (freeform windows restricted by device)",
-                        Toast.LENGTH_SHORT).show();
+                                + " full screen. Your phone does not allow floating windows for other apps (see Multitasking Setup Center).",
+                        Toast.LENGTH_LONG).show();
             } else if (status == ExternalAppLauncher.LaunchStatus.APP_UNINSTALLED) {
                 String label = appInfo != null ? appInfo.appName : shortcut.packageName;
                 Toast.makeText(this, getString(R.string.app_uninstalled_removed, label), Toast.LENGTH_LONG).show();

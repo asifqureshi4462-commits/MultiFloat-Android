@@ -1,14 +1,19 @@
-name: MultiFloat Android CI
+name: MultiFloat Build APK
 
 on:
   push:
     branches: [ main, master ]
-  pull_request:
-    branches: [ main, master ]
+  workflow_dispatch:
 
 jobs:
-  build-and-test:
+  build-apk:
     runs-on: ubuntu-latest
+    timeout-minutes: 40
+
+    env:
+      KEYSTORE_PATH: ${{ github.workspace }}/my-upload-key.jks
+      STORE_PASSWORD: multifloat123
+      KEY_PASSWORD: multifloat123
 
     steps:
       - name: Checkout repository
@@ -20,19 +25,53 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
+      - name: Set up Android SDK (accepts licenses)
+        uses: android-actions/setup-android@v3
+
       - name: Set up Gradle 9.3.1
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '9.3.1'
 
-      - name: Run Unit & Robolectric Tests
-        run: gradle :app:testDebugUnitTest
+      - name: Restore keystores from cache
+        id: ks-cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            debug.keystore
+            my-upload-key.jks
+          key: multifloat-keystores-v1
 
-      - name: Build Debug APK
-        run: gradle :app:assembleDebug
+      - name: Generate keystores (only if not cached)
+        if: steps.ks-cache.outputs.cache-hit != 'true'
+        run: |
+          keytool -genkeypair -v \
+            -keystore debug.keystore \
+            -storepass android -keypass android \
+            -alias androiddebugkey \
+            -keyalg RSA -keysize 2048 -validity 10000 \
+            -dname "CN=Android Debug,O=Android,C=US"
+          keytool -genkeypair -v \
+            -keystore my-upload-key.jks \
+            -storepass "$STORE_PASSWORD" -keypass "$KEY_PASSWORD" \
+            -alias upload \
+            -keyalg RSA -keysize 2048 -validity 10000 \
+            -dname "CN=MultiFloat,O=MultiFloat,C=IN"
 
-      - name: Upload Debug APK Artifact
+      - name: Build Debug + Release APK
+        run: gradle :app:assembleDebug :app:assembleRelease --stacktrace --no-configuration-cache
+
+      - name: Show built APKs
+        run: find app/build/outputs/apk -name "*.apk"
+
+      - name: Upload Debug APK
         uses: actions/upload-artifact@v4
         with:
           name: MultiFloat-debug-apk
           path: app/build/outputs/apk/debug/*.apk
+
+      - name: Upload Release APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: MultiFloat-release-apk
+          path: app/build/outputs/apk/release/*.apk

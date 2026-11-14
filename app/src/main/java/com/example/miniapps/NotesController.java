@@ -46,9 +46,15 @@ public class NotesController extends BaseMiniAppController {
     private final Handler autoSaveHandler = new Handler(Looper.getMainLooper());
     private final Runnable autoSaveRunnable = this::performAutoSave;
 
-    public NotesController(Context context, HostCallback hostCallback) {
+    public NotesController(Context context, MiniApp.HostCallback hostCallback) {
         super(context, hostCallback);
         this.repository = MultiFloatApp.get().getNotesRepository();
+    }
+
+    @NonNull
+    @Override
+    public com.example.model.ToolType getToolType() {
+        return com.example.model.ToolType.NOTES;
     }
 
     @Override
@@ -170,10 +176,17 @@ public class NotesController extends BaseMiniAppController {
     }
 
     @Override
-    public void onDetached() {
+    public void onPause() {
         autoSaveHandler.removeCallbacks(autoSaveRunnable);
         performAutoSave();
-        super.onDetached();
+        super.onPause();
+    }
+
+    @Override
+    public void onDestroy() {
+        autoSaveHandler.removeCallbacks(autoSaveRunnable);
+        performAutoSave();
+        super.onDestroy();
     }
 
     private class NotesAdapter extends RecyclerView.Adapter<NotesAdapter.VH> {

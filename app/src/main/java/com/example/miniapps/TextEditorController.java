@@ -37,9 +37,15 @@ public class TextEditorController extends BaseMiniAppController {
     private RecyclerView rvSavedFiles;
     private boolean showingFiles = false;
 
-    public TextEditorController(Context context, HostCallback hostCallback) {
+    public TextEditorController(Context context, MiniApp.HostCallback hostCallback) {
         super(context, hostCallback);
         this.repository = MultiFloatApp.get().getTextFileRepository();
+    }
+
+    @NonNull
+    @Override
+    public com.example.model.ToolType getToolType() {
+        return com.example.model.ToolType.TEXT_EDITOR;
     }
 
     @Override
@@ -110,6 +116,24 @@ public class TextEditorController extends BaseMiniAppController {
         });
 
         return view;
+    }
+
+    @Override
+    public void onSaveState(@NonNull android.os.Bundle outState) {
+        outState.putLong("editor_file_id", currentFileId);
+        if (etFileName != null) outState.putString("editor_filename", etFileName.getText().toString());
+        if (etBody != null) outState.putString("editor_body", etBody.getText().toString());
+    }
+
+    @Override
+    protected void onRestoreState(@NonNull android.os.Bundle savedState) {
+        currentFileId = savedState.getLong("editor_file_id", 0);
+        if (etFileName != null && savedState.containsKey("editor_filename")) {
+            etFileName.setText(savedState.getString("editor_filename", ""));
+        }
+        if (etBody != null && savedState.containsKey("editor_body")) {
+            etBody.setText(savedState.getString("editor_body", ""));
+        }
     }
 
     private class FilesAdapter extends RecyclerView.Adapter<FilesAdapter.VH> {

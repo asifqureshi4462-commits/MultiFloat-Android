@@ -15,6 +15,7 @@ public class FloatingWindowState {
     public boolean minimized;
     public boolean maximized;
     public boolean focused;
+    public int zIndex;
     public int savedX;
     public int savedY;
     public int savedWidthPx;
@@ -33,6 +34,7 @@ public class FloatingWindowState {
         this.minimized = false;
         this.maximized = false;
         this.focused = true;
+        this.zIndex = 0;
         this.savedX = x;
         this.savedY = y;
         this.savedWidthPx = widthPx;
@@ -51,6 +53,7 @@ public class FloatingWindowState {
         obj.put("alpha", alpha);
         obj.put("minimized", minimized);
         obj.put("maximized", maximized);
+        obj.put("zIndex", zIndex);
         return obj;
     }
 
@@ -66,6 +69,7 @@ public class FloatingWindowState {
         FloatingWindowState state = new FloatingWindowState(id, type, title, x, y, w, h, alpha);
         state.minimized = obj.optBoolean("minimized", false);
         state.maximized = obj.optBoolean("maximized", false);
+        state.zIndex = obj.optInt("zIndex", 0);
         return state;
     }
 }

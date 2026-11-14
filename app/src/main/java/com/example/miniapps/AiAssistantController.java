@@ -32,9 +32,15 @@ public class AiAssistantController extends BaseMiniAppController {
     private ProgressBar progressBar;
     private RecyclerView recyclerView;
 
-    public AiAssistantController(Context context, HostCallback hostCallback) {
+    public AiAssistantController(Context context, MiniApp.HostCallback hostCallback) {
         super(context, hostCallback);
         this.repository = MultiFloatApp.get().getAiChatRepository();
+    }
+
+    @NonNull
+    @Override
+    public com.example.model.ToolType getToolType() {
+        return com.example.model.ToolType.AI_ASSISTANT;
     }
 
     @Override
@@ -92,6 +98,12 @@ public class AiAssistantController extends BaseMiniAppController {
         });
 
         return view;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        refreshKeyStatus();
     }
 
     public void refreshKeyStatus() {

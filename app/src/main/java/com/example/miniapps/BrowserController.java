@@ -25,9 +25,15 @@ public class BrowserController extends BaseMiniAppController {
     private ProgressBar progressBar;
     private final AppPreferences preferences;
 
-    public BrowserController(Context context, HostCallback hostCallback) {
+    public BrowserController(Context context, MiniApp.HostCallback hostCallback) {
         super(context, hostCallback);
         this.preferences = MultiFloatApp.get().getPreferences();
+    }
+
+    @androidx.annotation.NonNull
+    @Override
+    public com.example.model.ToolType getToolType() {
+        return com.example.model.ToolType.BROWSER;
     }
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -91,7 +97,9 @@ public class BrowserController extends BaseMiniAppController {
             return false;
         });
 
-        loadInputUrl(preferences.getBrowserHomeUrl());
+        android.os.Bundle saved = getPendingSavedState();
+        String initialUrl = saved != null ? saved.getString("browser_url", "") : "";
+        loadInputUrl(initialUrl.isEmpty() ? preferences.getBrowserHomeUrl() : initialUrl);
         return view;
     }
 
@@ -112,11 +120,33 @@ public class BrowserController extends BaseMiniAppController {
     }
 
     @Override
-    public void onDetached() {
+    public void onResume() {
+        super.onResume();
+        if (webView != null) webView.onResume();
+    }
+
+    @Override
+    public void onPause() {
+        if (webView != null) webView.onPause();
+        super.onPause();
+    }
+
+    @Override
+    public void onSaveState(@androidx.annotation.NonNull android.os.Bundle outState) {
+        if (webView != null && webView.getUrl() != null) {
+            outState.putString("browser_url", webView.getUrl());
+        } else if (etUrl != null) {
+            outState.putString("browser_url", etUrl.getText().toString());
+        }
+    }
+
+    @Override
+    public void onDestroy() {
         if (webView != null) {
             webView.stopLoading();
             webView.destroy();
+            webView = null;
         }
-        super.onDetached();
+        super.onDestroy();
     }
 }

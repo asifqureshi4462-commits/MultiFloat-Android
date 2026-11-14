@@ -29,6 +29,7 @@ public class GeneralSettingsActivity extends AppCompatActivity {
         MaterialSwitch swEdgeSnap = findViewById(R.id.switch_edge_snap);
         MaterialSwitch swRememberPos = findViewById(R.id.switch_remember_pos);
         MaterialSwitch swRestoreSession = findViewById(R.id.switch_restore_session);
+        MaterialSwitch swAllowDuplicates = findViewById(R.id.switch_allow_duplicates);
         EditText etBrowserHome = findViewById(R.id.et_browser_home);
 
         RadioGroup rgAiProvider = findViewById(R.id.rg_ai_provider);
@@ -42,11 +43,13 @@ public class GeneralSettingsActivity extends AppCompatActivity {
         swEdgeSnap.setChecked(prefs.isEdgeSnapEnabled());
         swRememberPos.setChecked(prefs.isRememberWindowPositions());
         swRestoreSession.setChecked(prefs.isRestoreSessionEnabled());
+        swAllowDuplicates.setChecked(prefs.isAllowDuplicateWindows());
         etBrowserHome.setText(prefs.getBrowserHomeUrl());
 
         swEdgeSnap.setOnCheckedChangeListener((b, c) -> prefs.setEdgeSnapEnabled(c));
         swRememberPos.setOnCheckedChangeListener((b, c) -> prefs.setRememberWindowPositions(c));
         swRestoreSession.setOnCheckedChangeListener((b, c) -> prefs.setRestoreSessionEnabled(c));
+        swAllowDuplicates.setOnCheckedChangeListener((b, c) -> prefs.setAllowDuplicateWindows(c));
 
         if (AppPreferences.AI_PROVIDER_OPENAI.equals(prefs.getAiProvider())) {
             ((RadioButton) findViewById(R.id.rb_ai_openai)).setChecked(true);

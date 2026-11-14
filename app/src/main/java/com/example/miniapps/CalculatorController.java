@@ -31,9 +31,15 @@ public class CalculatorController extends BaseMiniAppController {
     private final List<CalcHistoryEntity> historyItems = new ArrayList<>();
     private HistoryAdapter historyAdapter;
 
-    public CalculatorController(Context context, HostCallback hostCallback) {
+    public CalculatorController(Context context, MiniApp.HostCallback hostCallback) {
         super(context, hostCallback);
         this.repository = MultiFloatApp.get().getCalculatorRepository();
+    }
+
+    @NonNull
+    @Override
+    public com.example.model.ToolType getToolType() {
+        return com.example.model.ToolType.CALCULATOR;
     }
 
     @Override
@@ -159,6 +165,23 @@ public class CalculatorController extends BaseMiniAppController {
         } catch (Exception e) {
             tvResult.setText("Error");
         }
+    }
+
+    @Override
+    public void onSaveState(@NonNull android.os.Bundle outState) {
+        outState.putString("calc_expr", expression.toString());
+        outState.putString("calc_last_result", lastResult);
+    }
+
+    @Override
+    protected void onRestoreState(@NonNull android.os.Bundle savedState) {
+        String expr = savedState.getString("calc_expr", "");
+        String res = savedState.getString("calc_last_result", "0");
+        expression.setLength(0);
+        expression.append(expr);
+        lastResult = res;
+        if (tvExpression != null) tvExpression.setText(expr.isEmpty() ? "0" : expr);
+        if (tvResult != null) tvResult.setText(res);
     }
 
     private class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.VH> {

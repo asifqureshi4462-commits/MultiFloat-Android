@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginVertical="4dp"
+    android:background="@drawable/bg_glass_card"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingHorizontal="10dp"
+    android:paddingVertical="6dp">
+
+    <ImageView
+        android:id="@+id/iv_reorder_grip"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:contentDescription="@string/cd_drawer_drag_grip"
+        android:src="@drawable/ic_drag_handle"
+        app:tint="@color/mf_text_muted" />
+
+    <ImageView
+        android:id="@+id/iv_reorder_icon"
+        android:layout_width="28dp"
+        android:layout_height="28dp"
+        android:layout_marginStart="8dp"
+        android:contentDescription="@string/cd_drawer_tool_icon"
+        android:padding="2dp" />
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="10dp"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/tv_reorder_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textColor="@color/mf_text_primary"
+            android:textSize="13sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tv_reorder_type"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textColor="@color/mf_text_secondary"
+            android:textSize="10sp" />
+    </LinearLayout>
+
+    <ImageButton
+        android:id="@+id/btn_reorder_up"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="Move shortcut up"
+        android:src="@drawable/ic_arrow_up"
+        app:tint="@color/mf_text_primary" />
+
+    <ImageButton
+        android:id="@+id/btn_reorder_down"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="Move shortcut down"
+        android:src="@drawable/ic_arrow_down"
+        app:tint="@color/mf_text_primary" />
+
+    <ImageButton
+        android:id="@+id/btn_reorder_remove"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="Remove app shortcut from sidebar"
+        android:src="@drawable/ic_close"
+        android:visibility="gone"
+        app:tint="@color/mf_error" />
+</LinearLayout>

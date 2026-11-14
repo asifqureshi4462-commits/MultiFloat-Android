@@ -29,4 +29,6 @@
     <color name="mf_error">#F87171</color>
     <color name="mf_on_accent">#FFFFFF</color>
     <color name="mf_divider">#1E2D4A</color>
+    <color name="mf_cyan_text">#00E5FF</color>
+    <color name="mf_resize_rest">#94A3B8</color>
 </resources>

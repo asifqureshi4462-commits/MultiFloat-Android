@@ -63,12 +63,17 @@ public class FloatingEngineBus {
     }
 
     public static boolean openFloatingTool(Context context, ToolType toolType) {
+        return openFloatingTool(context, toolType, false);
+    }
+
+    public static boolean openFloatingTool(Context context, ToolType toolType, boolean forceNewInstance) {
         if (!PermissionHelper.canDrawOverlays(context)) {
             return false;
         }
         Intent intent = new Intent(context, FloatingWindowService.class);
         intent.setAction(FloatingWindowService.ACTION_OPEN_TOOL);
         intent.putExtra(FloatingWindowService.EXTRA_TOOL_ID, toolType.id);
+        intent.putExtra(FloatingWindowService.EXTRA_FORCE_NEW_INSTANCE, forceNewInstance);
         ContextCompat.startForegroundService(context, intent);
         return true;
     }

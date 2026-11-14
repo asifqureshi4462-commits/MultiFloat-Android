@@ -25,8 +25,10 @@
 
     <!-- Status -->
     <color name="mf_success">#10B981</color>
-    <color name="mf_warning">#F59E0B</color>
-    <color name="mf_error">#EF4444</color>
+    <color name="mf_warning">#D97706</color>
+    <color name="mf_error">#DC2626</color>
     <color name="mf_on_accent">#FFFFFF</color>
-    <color name="mf_divider">#E2E8F0</color>
+    <color name="mf_divider">#CBD5E1</color>
+    <color name="mf_cyan_text">#0284C7</color>
+    <color name="mf_resize_rest">#475569</color>
 </resources>

@@ -23,6 +23,7 @@ public enum ToolType {
 
     public enum DrawerFilter {
         ALL,
+        APPS,
         PRODUCTIVITY,
         FAVORITES
     }
@@ -50,6 +51,9 @@ public enum ToolType {
 
     public static List<ToolType> getOrderedDrawerTools(DrawerFilter filter, Set<String> favorites) {
         List<ToolType> result = new ArrayList<>();
+        if (filter == DrawerFilter.APPS) {
+            return result;
+        }
         boolean hasFavs = favorites != null && !favorites.isEmpty();
 
         // Favorites first when matching filter
@@ -70,6 +74,9 @@ public enum ToolType {
     }
 
     private static boolean matchesFilter(ToolType type, DrawerFilter filter, Set<String> favorites) {
+        if (filter == DrawerFilter.APPS) {
+            return false;
+        }
         if (filter == DrawerFilter.PRODUCTIVITY) {
             return type.isProductivity();
         }

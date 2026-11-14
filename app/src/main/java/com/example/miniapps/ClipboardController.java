@@ -27,9 +27,15 @@ public class ClipboardController extends BaseMiniAppController {
     private ClipboardAdapter adapter;
     private TextView tvEmpty;
 
-    public ClipboardController(Context context, HostCallback hostCallback) {
+    public ClipboardController(Context context, MiniApp.HostCallback hostCallback) {
         super(context, hostCallback);
         this.repository = MultiFloatApp.get().getClipboardRepository();
+    }
+
+    @NonNull
+    @Override
+    public com.example.model.ToolType getToolType() {
+        return com.example.model.ToolType.CLIPBOARD;
     }
 
     @Override

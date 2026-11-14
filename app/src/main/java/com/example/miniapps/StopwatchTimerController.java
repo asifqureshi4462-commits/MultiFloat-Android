@@ -70,8 +70,14 @@ public class StopwatchTimerController extends BaseMiniAppController {
         }
     };
 
-    public StopwatchTimerController(Context context, HostCallback hostCallback) {
+    public StopwatchTimerController(Context context, MiniApp.HostCallback hostCallback) {
         super(context, hostCallback);
+    }
+
+    @NonNull
+    @Override
+    public com.example.model.ToolType getToolType() {
+        return com.example.model.ToolType.STOPWATCH_TIMER;
     }
 
     @Override
@@ -213,9 +219,36 @@ public class StopwatchTimerController extends BaseMiniAppController {
     }
 
     @Override
-    public void onDetached() {
+    public void onSaveState(@NonNull android.os.Bundle outState) {
+        outState.putBoolean("sw_is_timer", isTimerMode);
+        long curSw = isRunning && !isTimerMode
+                ? swAccumulatedMs + (SystemClock.elapsedRealtime() - swStartElapsed)
+                : swAccumulatedMs;
+        long curTimer = isRunning && isTimerMode
+                ? Math.max(0L, timerEndElapsed - SystemClock.elapsedRealtime())
+                : timerRemainingMs;
+        outState.putLong("sw_accumulated_ms", curSw);
+        outState.putLong("timer_duration_ms", timerDurationMs);
+        outState.putLong("timer_remaining_ms", curTimer);
+    }
+
+    @Override
+    protected void onRestoreState(@NonNull android.os.Bundle savedState) {
+        swAccumulatedMs = savedState.getLong("sw_accumulated_ms", 0L);
+        timerDurationMs = savedState.getLong("timer_duration_ms", 5 * 60_000L);
+        timerRemainingMs = savedState.getLong("timer_remaining_ms", timerDurationMs);
+        boolean timer = savedState.getBoolean("sw_is_timer", false);
+        isTimerMode = timer;
+        if (panelPresets != null) panelPresets.setVisibility(timer ? View.VISIBLE : View.GONE);
+        if (tvDisplay != null) {
+            tvDisplay.setText(formatMillis(timer ? timerRemainingMs : swAccumulatedMs));
+        }
+    }
+
+    @Override
+    public void onDestroy() {
         handler.removeCallbacks(ticker);
-        super.onDetached();
+        super.onDestroy();
     }
 
     private class LapAdapter extends RecyclerView.Adapter<LapAdapter.VH> {

@@ -44,8 +44,14 @@ public class QrScannerController extends BaseMiniAppController {
     private final ExecutorService cameraExecutor = Executors.newSingleThreadExecutor();
     private final MultiFormatReader qrReader = new MultiFormatReader();
 
-    public QrScannerController(Context context, HostCallback hostCallback) {
+    public QrScannerController(Context context, MiniApp.HostCallback hostCallback) {
         super(context, hostCallback);
+    }
+
+    @androidx.annotation.NonNull
+    @Override
+    public ToolType getToolType() {
+        return ToolType.QR_SCANNER;
     }
 
     @Override
@@ -158,11 +164,19 @@ public class QrScannerController extends BaseMiniAppController {
     }
 
     @Override
-    public void onDetached() {
+    public void onResume() {
+        super.onResume();
+        if (rootView != null) {
+            refreshCameraState();
+        }
+    }
+
+    @Override
+    public void onDestroy() {
         if (cameraProvider != null) {
             cameraProvider.unbindAll();
         }
         cameraExecutor.shutdown();
-        super.onDetached();
+        super.onDestroy();
     }
 }

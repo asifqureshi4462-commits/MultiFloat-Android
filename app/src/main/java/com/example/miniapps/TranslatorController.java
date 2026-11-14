@@ -26,9 +26,15 @@ public class TranslatorController extends BaseMiniAppController {
     private final TranslatorRepository repository;
     private View bannerConfig;
 
-    public TranslatorController(Context context, HostCallback hostCallback) {
+    public TranslatorController(Context context, MiniApp.HostCallback hostCallback) {
         super(context, hostCallback);
         this.repository = MultiFloatApp.get().getTranslatorRepository();
+    }
+
+    @androidx.annotation.NonNull
+    @Override
+    public com.example.model.ToolType getToolType() {
+        return com.example.model.ToolType.TRANSLATOR;
     }
 
     @Override
@@ -77,6 +83,12 @@ public class TranslatorController extends BaseMiniAppController {
         });
 
         return view;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        refreshConfigBanner();
     }
 
     public void refreshConfigBanner() {

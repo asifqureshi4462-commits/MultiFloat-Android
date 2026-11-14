@@ -1,5 +1,7 @@
 package com.example.service;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
 import android.app.Notification;
@@ -8,15 +10,22 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ServiceInfo;
+import android.content.res.ColorStateList;
+import android.content.res.Configuration;
 import android.graphics.PixelFormat;
 import android.graphics.Point;
+import android.graphics.Rect;
 import android.graphics.drawable.GradientDrawable;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraManager;
 import android.os.Build;
+import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
-import android.provider.Settings;
+import android.os.Looper;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.DisplayMetrics;
 import android.view.ContextThemeWrapper;
 import android.view.Gravity;
@@ -27,7 +36,10 @@ import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.DecelerateInterpolator;
+import android.view.animation.OvershootInterpolator;
+import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.GridLayout;
 import android.widget.ImageButton;
@@ -37,24 +49,37 @@ import android.widget.ScrollView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 import com.example.MultiFloatApp;
 import com.example.R;
 import com.example.data.preferences.AppPreferences;
-import com.example.miniapps.BaseMiniAppController;
-import com.example.miniapps.MiniAppFactory;
+import com.example.data.repository.InstalledAppsRepository;
+import com.example.miniapps.MiniApp;
+import com.example.miniapps.MiniAppContainerHost;
+import com.example.miniapps.MiniAppRegistry;
 import com.example.model.FloatingWindowState;
+import com.example.model.InstalledAppInfo;
+import com.example.model.SidebarShortcut;
 import com.example.model.ToolType;
+import com.example.ui.InstalledAppsActivity;
 import com.example.ui.MainActivity;
 import com.example.ui.PermissionSetupActivity;
 import com.example.ui.settings.GeneralSettingsActivity;
+import com.example.ui.settings.SidebarSettingsActivity;
 import com.example.ui.tools.QrScannerActivity;
+import com.example.ui.view.FloatingWindowFrame;
 import com.example.util.EdgeToEdgeHelper;
+import com.example.util.ExternalAppLauncher;
 import com.example.util.PermissionHelper;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -78,13 +103,17 @@ public class FloatingWindowService extends Service {
 
     public static final String EXTRA_TOOL_ID = "extra_tool_id";
     public static final String EXTRA_WINDOW_ID = "extra_window_id";
+    public static final String EXTRA_FORCE_NEW_INSTANCE = "extra_force_new_instance";
 
     private static final int NOTIFICATION_ID = 1001;
 
     private WindowManager windowManager;
     private LayoutInflater themedInflater;
     private Context themedContext;
+    private int appliedThemeMode = -1;
     private AppPreferences preferences;
+    private final Handler mainHandler = new Handler(Looper.getMainLooper());
+    private final Runnable reassertOverlaysRunnable = this::reassertSystemOverlaysOnTop;
 
     private View bubbleView;
     private WindowManager.LayoutParams bubbleParams;
@@ -98,28 +127,36 @@ public class FloatingWindowService extends Service {
     private boolean sidebarExpanded = false;
     private boolean torchOn = false;
     private ToolType.DrawerFilter currentDrawerFilter = ToolType.DrawerFilter.ALL;
+    private String sidebarSearchQuery = "";
 
     private View dragGhostView;
     private WindowManager.LayoutParams dragGhostParams;
     private TextView tvDragGhostHint;
 
-    private final Map<String, FloatingWindowInstance> windows = new LinkedHashMap<>();
+    private View taskbarDockView;
+    private WindowManager.LayoutParams taskbarDockParams;
 
-    private class FloatingWindowInstance {
+    private final Map<String, FloatingWindowInstance> windows = new LinkedHashMap<>();
+    private final WindowZOrderManager zOrderManager = new WindowZOrderManager();
+    @Nullable
+    private String pendingBringToFrontWindowId = null;
+
+    private static class FloatingWindowInstance {
         final FloatingWindowState state;
         final View rootView;
         final WindowManager.LayoutParams params;
-        final BaseMiniAppController controller;
+        final MiniAppContainerHost miniAppHost;
         final LinearLayout cardInner;
         final View focusDot;
         final View opacityPanel;
+        @Nullable ValueAnimator transitionAnimator;
 
         FloatingWindowInstance(FloatingWindowState state, View rootView,
-                               WindowManager.LayoutParams params, BaseMiniAppController controller) {
+                               WindowManager.LayoutParams params, MiniAppContainerHost miniAppHost) {
             this.state = state;
             this.rootView = rootView;
             this.params = params;
-            this.controller = controller;
+            this.miniAppHost = miniAppHost;
             this.cardInner = rootView.findViewById(R.id.window_card_inner);
             this.focusDot = rootView.findViewById(R.id.view_focus_dot);
             this.opacityPanel = rootView.findViewById(R.id.panel_win_opacity_bar);
@@ -131,7 +168,22 @@ public class FloatingWindowService extends Service {
         super.onCreate();
         windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
         preferences = MultiFloatApp.get().getPreferences();
-        themedContext = new ContextThemeWrapper(this, R.style.Theme_MultiFloat);
+        rebuildThemedContext();
+    }
+
+    private void rebuildThemedContext() {
+        int mode = preferences.getThemeMode();
+        appliedThemeMode = mode;
+        Configuration config = new Configuration(getResources().getConfiguration());
+        if (mode == AppPreferences.THEME_LIGHT) {
+            config.uiMode = (config.uiMode & ~Configuration.UI_MODE_NIGHT_MASK)
+                    | Configuration.UI_MODE_NIGHT_NO;
+        } else if (mode == AppPreferences.THEME_DARK) {
+            config.uiMode = (config.uiMode & ~Configuration.UI_MODE_NIGHT_MASK)
+                    | Configuration.UI_MODE_NIGHT_YES;
+        }
+        Context cfgContext = createConfigurationContext(config);
+        themedContext = new ContextThemeWrapper(cfgContext, R.style.Theme_MultiFloat);
         themedInflater = LayoutInflater.from(themedContext);
     }
 
@@ -166,6 +218,7 @@ public class FloatingWindowService extends Service {
                 removeBubble();
                 removeBubbleMenu();
                 removeDragGhost();
+                removeTaskbarDock();
                 removeSidebar();
                 FloatingEngineBus.updateRunning(false);
                 stopForeground(STOP_FOREGROUND_REMOVE);
@@ -173,7 +226,8 @@ public class FloatingWindowService extends Service {
                 return START_NOT_STICKY;
             case ACTION_OPEN_TOOL:
                 String toolId = intent.getStringExtra(EXTRA_TOOL_ID);
-                openToolWindow(ToolType.fromId(toolId), null);
+                boolean forceNew = intent.getBooleanExtra(EXTRA_FORCE_NEW_INSTANCE, false);
+                openToolWindow(ToolType.fromId(toolId), null, null, forceNew);
                 break;
             case ACTION_FOCUS_WINDOW:
             case ACTION_RESTORE_WINDOW:
@@ -195,8 +249,13 @@ public class FloatingWindowService extends Service {
                 restorePreviousSession();
                 break;
             case ACTION_TOGGLE_BUBBLE:
-                if (bubbleView == null) createBubble();
-                else removeBubble();
+                if (bubbleView == null) {
+                    preferences.setBubbleEnabled(true);
+                    createBubble();
+                } else {
+                    preferences.setBubbleEnabled(false);
+                    removeBubble();
+                }
                 break;
             case ACTION_REFRESH_CONFIG:
                 applyPreferencesRefresh();
@@ -265,8 +324,11 @@ public class FloatingWindowService extends Service {
     }
 
     private DisplayMetrics screenMetrics() {
+        Rect raw = WindowBoundsHelper.getRawScreenBounds(windowManager);
         DisplayMetrics dm = new DisplayMetrics();
-        windowManager.getDefaultDisplay().getMetrics(dm);
+        dm.setTo(getResources().getDisplayMetrics());
+        dm.widthPixels = raw.width();
+        dm.heightPixels = raw.height();
         return dm;
     }
 
@@ -286,7 +348,7 @@ public class FloatingWindowService extends Service {
         orb.setLayoutParams(orbLp);
         bubbleView.setAlpha(preferences.getBubbleOpacityPercent() / 100f);
 
-        DisplayMetrics dm = screenMetrics();
+        Rect safe = WindowBoundsHelper.getSafeScreenBounds(windowManager, this);
         bubbleParams = new WindowManager.LayoutParams(
                 WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.WRAP_CONTENT,
@@ -295,9 +357,16 @@ public class FloatingWindowService extends Service {
                 PixelFormat.TRANSLUCENT
         );
         bubbleParams.gravity = Gravity.TOP | Gravity.START;
-        bubbleParams.x = preferences.getBubbleX(dm.widthPixels - sizePx - 24);
-        bubbleParams.y = preferences.getBubbleY(dm.heightPixels / 3);
+        int defX = safe.right - sizePx - EdgeToEdgeHelper.dpToPx(this, 8);
+        int defY = safe.top + safe.height() / 3;
+        WindowBoundsHelper.ClampedPoint clamped = WindowBoundsHelper.clampWindowPosition(
+                preferences.getBubbleX(defX),
+                preferences.getBubbleY(defY),
+                sizePx, sizePx, safe);
+        bubbleParams.x = clamped.x;
+        bubbleParams.y = clamped.y;
 
+        final int touchSlop = ViewConfiguration.get(themedContext).getScaledTouchSlop();
         orb.setOnTouchListener(new View.OnTouchListener() {
             int initX, initY;
             float downX, downY;
@@ -305,7 +374,7 @@ public class FloatingWindowService extends Service {
 
             @Override
             public boolean onTouch(View v, MotionEvent event) {
-                switch (event.getAction()) {
+                switch (event.getActionMasked()) {
                     case MotionEvent.ACTION_DOWN:
                         initX = bubbleParams.x;
                         initY = bubbleParams.y;
@@ -316,18 +385,26 @@ public class FloatingWindowService extends Service {
                     case MotionEvent.ACTION_MOVE:
                         float dx = event.getRawX() - downX;
                         float dy = event.getRawY() - downY;
-                        if (Math.abs(dx) > 10 || Math.abs(dy) > 10) moved = true;
-                        bubbleParams.x = Math.max(0, Math.min(dm.widthPixels - sizePx, initX + (int) dx));
-                        bubbleParams.y = Math.max(0, Math.min(dm.heightPixels - sizePx - 60, initY + (int) dy));
-                        windowManager.updateViewLayout(bubbleView, bubbleParams);
+                        if (Math.hypot(dx, dy) > touchSlop) {
+                            moved = true;
+                        }
+                        if (moved) {
+                            Rect curSafe = WindowBoundsHelper.getSafeScreenBounds(windowManager, FloatingWindowService.this);
+                            WindowBoundsHelper.ClampedPoint p = WindowBoundsHelper.clampWindowPosition(
+                                    initX + Math.round(dx), initY + Math.round(dy), sizePx, sizePx, curSafe);
+                            bubbleParams.x = p.x;
+                            bubbleParams.y = p.y;
+                            windowManager.updateViewLayout(bubbleView, bubbleParams);
+                        }
                         return true;
                     case MotionEvent.ACTION_UP:
                         if (!moved) {
                             toggleBubbleMenu();
                         } else {
-                            // Snap bubble to nearest horizontal screen edge
-                            int targetX = (bubbleParams.x + sizePx / 2 < dm.widthPixels / 2)
-                                    ? 16 : dm.widthPixels - sizePx - 16;
+                            Rect curSafe = WindowBoundsHelper.getSafeScreenBounds(windowManager, FloatingWindowService.this);
+                            int edgePad = EdgeToEdgeHelper.dpToPx(FloatingWindowService.this, 6);
+                            int targetX = (bubbleParams.x + sizePx / 2 < curSafe.centerX())
+                                    ? curSafe.left + edgePad : curSafe.right - sizePx - edgePad;
                             animateBubbleSnapX(bubbleParams.x, targetX);
                             preferences.saveBubblePosition(targetX, bubbleParams.y);
                         }
@@ -370,6 +447,7 @@ public class FloatingWindowService extends Service {
         if (bubbleView != null) {
             try { windowManager.removeView(bubbleView); } catch (Exception ignored) {}
             bubbleView = null;
+            tvBubbleBadge = null;
         }
     }
 
@@ -379,7 +457,6 @@ public class FloatingWindowService extends Service {
             return;
         }
         bubbleMenuView = themedInflater.inflate(R.layout.overlay_bubble_menu, null);
-        DisplayMetrics dm = screenMetrics();
         bubbleMenuParams = new WindowManager.LayoutParams(
                 WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.WRAP_CONTENT,
@@ -393,9 +470,15 @@ public class FloatingWindowService extends Service {
 
         // Populate Active/Minimized Windows
         TextView tvWinHeader = bubbleMenuView.findViewById(R.id.tv_bm_windows_header);
+        ScrollView scrollWindows = bubbleMenuView.findViewById(R.id.scroll_bm_windows);
         LinearLayout winContainer = bubbleMenuView.findViewById(R.id.container_bm_windows);
         if (!windows.isEmpty()) {
             tvWinHeader.setVisibility(View.VISIBLE);
+            if (windows.size() > 3 && scrollWindows != null) {
+                ViewGroup.LayoutParams slp = scrollWindows.getLayoutParams();
+                slp.height = EdgeToEdgeHelper.dpToPx(this, 130);
+                scrollWindows.setLayoutParams(slp);
+            }
             for (FloatingWindowInstance inst : windows.values()) {
                 LinearLayout pill = new LinearLayout(themedContext);
                 pill.setOrientation(LinearLayout.HORIZONTAL);
@@ -417,7 +500,7 @@ public class FloatingWindowService extends Service {
                 TextView action = new TextView(themedContext);
                 action.setText(inst.state.minimized ? "Restore" : "Focus");
                 action.setTextSize(11f);
-                action.setTextColor(themedContext.getColor(R.color.electric_cyan));
+                action.setTextColor(themedContext.getColor(R.color.mf_cyan_text));
                 pill.addView(action);
 
                 pill.setOnClickListener(v -> {
@@ -435,14 +518,15 @@ public class FloatingWindowService extends Service {
             ImageView icon = cell.findViewById(R.id.iv_sb_tool_icon);
             TextView name = cell.findViewById(R.id.tv_sb_tool_name);
             icon.setImageResource(type.iconRes);
+            icon.setImageTintList(ColorStateList.valueOf(themedContext.getColor(R.color.mf_cyan_text)));
             name.setText(type.titleRes);
             GridLayout.LayoutParams gp = new GridLayout.LayoutParams();
-            gp.width = EdgeToEdgeHelper.dpToPx(this, 84);
+            gp.width = EdgeToEdgeHelper.dpToPx(this, 88);
             gp.height = ViewGroup.LayoutParams.WRAP_CONTENT;
             cell.setLayoutParams(gp);
             cell.setOnClickListener(v -> {
                 removeBubbleMenu();
-                openToolWindow(type, null);
+                openToolWindow(type, null, null, false);
             });
             grid.addView(cell);
         }
@@ -460,6 +544,12 @@ public class FloatingWindowService extends Service {
             Intent i = new Intent(this, MainActivity.class);
             i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
             startActivity(i);
+        });
+        bubbleMenuView.findViewById(R.id.btn_bm_close_bubble).setOnClickListener(v -> {
+            removeBubbleMenu();
+            preferences.setBubbleEnabled(false);
+            removeBubble();
+            Toast.makeText(this, "Floating bubble closed. Re-enable from MultiFloat Dashboard.", Toast.LENGTH_SHORT).show();
         });
 
         bubbleMenuView.setAlpha(0f);
@@ -483,6 +573,7 @@ public class FloatingWindowService extends Service {
         if (sidebarView != null) return;
         sidebarView = themedInflater.inflate(R.layout.overlay_sidebar, null);
         sidebarExpanded = false;
+        sidebarSearchQuery = "";
 
         boolean isLeft = AppPreferences.SIDEBAR_LEFT.equals(preferences.getSidebarPosition());
         LinearLayout root = sidebarView.findViewById(R.id.sidebar_root);
@@ -507,7 +598,7 @@ public class FloatingWindowService extends Service {
         }
 
         int sizeLevel = preferences.getSidebarSizeLevel();
-        int widthDp = sizeLevel == 0 ? 186 : (sizeLevel == 2 ? 244 : 214);
+        int widthDp = sizeLevel == 0 ? 196 : (sizeLevel == 2 ? 256 : 226);
         ViewGroup.LayoutParams panelLp = panel.getLayoutParams();
         panelLp.width = EdgeToEdgeHelper.dpToPx(this, widthDp);
         panel.setLayoutParams(panelLp);
@@ -515,7 +606,7 @@ public class FloatingWindowService extends Service {
         if (scrollTools != null) {
             DisplayMetrics dm = screenMetrics();
             ViewGroup.LayoutParams scrollLp = scrollTools.getLayoutParams();
-            scrollLp.height = Math.min(EdgeToEdgeHelper.dpToPx(this, 310), Math.round(dm.heightPixels * 0.48f));
+            scrollLp.height = Math.min(EdgeToEdgeHelper.dpToPx(this, 290), Math.round(dm.heightPixels * 0.44f));
             scrollTools.setLayoutParams(scrollLp);
         }
 
@@ -538,7 +629,7 @@ public class FloatingWindowService extends Service {
 
             @Override
             public boolean onTouch(View v, MotionEvent event) {
-                switch (event.getAction()) {
+                switch (event.getActionMasked()) {
                     case MotionEvent.ACTION_DOWN:
                         downX = event.getRawX();
                         downY = event.getRawY();
@@ -572,8 +663,30 @@ public class FloatingWindowService extends Service {
             }
         });
 
+        EditText etSearch = sidebarView.findViewById(R.id.et_sb_search);
+        if (etSearch != null) {
+            etSearch.setOnTouchListener((v, event) -> {
+                setSidebarInputFocusable(true);
+                return false;
+            });
+            etSearch.setOnFocusChangeListener((v, hasFocus) -> setSidebarInputFocusable(hasFocus));
+            etSearch.addTextChangedListener(new TextWatcher() {
+                @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+                @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
+                    sidebarSearchQuery = s != null ? s.toString().trim().toLowerCase(Locale.US) : "";
+                    populateSidebarTools();
+                }
+                @Override public void afterTextChanged(Editable s) {}
+            });
+        }
+
         sidebarView.findViewById(R.id.tab_sb_all).setOnClickListener(v -> {
             currentDrawerFilter = ToolType.DrawerFilter.ALL;
+            updateDrawerFilterTabs();
+            populateSidebarTools();
+        });
+        sidebarView.findViewById(R.id.tab_sb_apps).setOnClickListener(v -> {
+            currentDrawerFilter = ToolType.DrawerFilter.APPS;
             updateDrawerFilterTabs();
             populateSidebarTools();
         });
@@ -590,6 +703,12 @@ public class FloatingWindowService extends Service {
 
         sidebarView.findViewById(R.id.btn_sb_collapse).setOnClickListener(v -> collapseSidebar(true));
         sidebarView.findViewById(R.id.btn_sb_flashlight).setOnClickListener(v -> toggleFlashlight());
+        sidebarView.findViewById(R.id.btn_sb_apps).setOnClickListener(v -> {
+            collapseSidebar(true);
+            Intent i = new Intent(this, InstalledAppsActivity.class);
+            i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(i);
+        });
         sidebarView.findViewById(R.id.btn_sb_dashboard).setOnClickListener(v -> {
             collapseSidebar(true);
             Intent i = new Intent(this, MainActivity.class);
@@ -598,12 +717,25 @@ public class FloatingWindowService extends Service {
         });
         sidebarView.findViewById(R.id.btn_sb_settings).setOnClickListener(v -> {
             collapseSidebar(true);
-            Intent i = new Intent(Settings.ACTION_SETTINGS);
+            Intent i = new Intent(this, SidebarSettingsActivity.class);
             i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(i);
         });
 
         windowManager.addView(sidebarView, sidebarParams);
+    }
+
+    private void setSidebarInputFocusable(boolean focusable) {
+        if (sidebarView == null || sidebarParams == null || !sidebarView.isAttachedToWindow()) return;
+        int prevFlags = sidebarParams.flags;
+        if (focusable) {
+            sidebarParams.flags &= ~WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
+        } else {
+            sidebarParams.flags |= WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
+        }
+        if (prevFlags != sidebarParams.flags) {
+            windowManager.updateViewLayout(sidebarView, sidebarParams);
+        }
     }
 
     private void expandSidebar() {
@@ -619,7 +751,7 @@ public class FloatingWindowService extends Service {
         panel.animate().cancel();
         panel.setVisibility(View.VISIBLE);
         int widthPx = panel.getLayoutParams().width;
-        if (widthPx <= 0) widthPx = EdgeToEdgeHelper.dpToPx(this, 214);
+        if (widthPx <= 0) widthPx = EdgeToEdgeHelper.dpToPx(this, 226);
         panel.setTranslationX(isLeft ? -widthPx * 0.85f : widthPx * 0.85f);
         panel.setAlpha(0f);
         panel.animate()
@@ -636,6 +768,7 @@ public class FloatingWindowService extends Service {
 
     private void collapseSidebar(boolean animate) {
         if (sidebarView == null) return;
+        setSidebarInputFocusable(false);
         View panel = sidebarView.findViewById(R.id.sidebar_panel);
         View arrow = sidebarView.findViewById(R.id.iv_sb_handle_arrow);
         boolean isLeft = AppPreferences.SIDEBAR_LEFT.equals(preferences.getSidebarPosition());
@@ -654,7 +787,7 @@ public class FloatingWindowService extends Service {
         }
 
         int widthPx = panel.getLayoutParams().width;
-        if (widthPx <= 0) widthPx = EdgeToEdgeHelper.dpToPx(this, 214);
+        if (widthPx <= 0) widthPx = EdgeToEdgeHelper.dpToPx(this, 226);
         panel.animate()
                 .translationX(isLeft ? -widthPx * 0.85f : widthPx * 0.85f)
                 .alpha(0f)
@@ -673,14 +806,18 @@ public class FloatingWindowService extends Service {
     private void updateDrawerFilterTabs() {
         if (sidebarView == null) return;
         TextView tabAll = sidebarView.findViewById(R.id.tab_sb_all);
+        TextView tabApps = sidebarView.findViewById(R.id.tab_sb_apps);
         TextView tabProd = sidebarView.findViewById(R.id.tab_sb_productivity);
         TextView tabFav = sidebarView.findViewById(R.id.tab_sb_favorites);
 
-        int activeColor = themedContext.getColor(R.color.electric_cyan);
+        int activeColor = themedContext.getColor(R.color.mf_cyan_text);
         int inactiveColor = themedContext.getColor(R.color.mf_text_secondary);
 
         if (tabAll != null) {
             tabAll.setTextColor(currentDrawerFilter == ToolType.DrawerFilter.ALL ? activeColor : inactiveColor);
+        }
+        if (tabApps != null) {
+            tabApps.setTextColor(currentDrawerFilter == ToolType.DrawerFilter.APPS ? activeColor : inactiveColor);
         }
         if (tabProd != null) {
             tabProd.setTextColor(currentDrawerFilter == ToolType.DrawerFilter.PRODUCTIVITY ? activeColor : inactiveColor);
@@ -697,12 +834,81 @@ public class FloatingWindowService extends Service {
         View panel = sidebarView.findViewById(R.id.sidebar_panel);
         container.removeAllViews();
 
-        Set<String> favs = preferences.getFavoriteTools();
-        List<ToolType> ordered = ToolType.getOrderedDrawerTools(currentDrawerFilter, favs);
+        Set<String> favTools = preferences.getFavoriteTools();
+        Set<String> favApps = preferences.getFavoriteApps();
+        List<String> selectedApps = preferences.getSelectedSidebarApps();
+        InstalledAppsRepository appsRepo = MultiFloatApp.get().getInstalledAppsRepository();
+        Map<String, InstalledAppInfo> appCache = new HashMap<>();
+        for (String pkg : selectedApps) {
+            InstalledAppInfo info = appsRepo.loadAppByPackage(this, pkg);
+            if (info != null) {
+                appCache.put(pkg, info);
+            }
+        }
 
-        if (ordered.isEmpty()) {
+        List<SidebarShortcut> shortcuts = new ArrayList<>();
+        if (currentDrawerFilter == ToolType.DrawerFilter.ALL) {
+            for (String key : preferences.getSidebarCustomOrder()) {
+                SidebarShortcut sc = SidebarShortcut.fromKey(key);
+                if (sc == null) continue;
+                if (sc.isExternalApp) {
+                    if (appCache.containsKey(sc.packageName)) {
+                        shortcuts.add(sc);
+                    }
+                } else {
+                    shortcuts.add(sc);
+                }
+            }
+        } else if (currentDrawerFilter == ToolType.DrawerFilter.APPS) {
+            for (String pkg : selectedApps) {
+                if (appCache.containsKey(pkg)) {
+                    shortcuts.add(SidebarShortcut.forApp(pkg));
+                }
+            }
+        } else if (currentDrawerFilter == ToolType.DrawerFilter.FAVORITES) {
+            for (String pkg : selectedApps) {
+                if (favApps.contains(pkg) && appCache.containsKey(pkg)) {
+                    shortcuts.add(SidebarShortcut.forApp(pkg));
+                }
+            }
+            for (ToolType t : ToolType.getOrderedDrawerTools(ToolType.DrawerFilter.FAVORITES, favTools)) {
+                shortcuts.add(SidebarShortcut.forTool(t));
+            }
+        } else {
+            for (ToolType t : ToolType.getOrderedDrawerTools(currentDrawerFilter, favTools)) {
+                shortcuts.add(SidebarShortcut.forTool(t));
+            }
+        }
+
+        // Apply live search filter
+        List<SidebarShortcut> filtered = new ArrayList<>();
+        for (SidebarShortcut sc : shortcuts) {
+            if (sidebarSearchQuery.isEmpty()) {
+                filtered.add(sc);
+            } else if (sc.isExternalApp && sc.packageName != null) {
+                InstalledAppInfo info = appCache.get(sc.packageName);
+                if (info != null && (info.appName.toLowerCase(Locale.US).contains(sidebarSearchQuery)
+                        || info.packageName.toLowerCase(Locale.US).contains(sidebarSearchQuery))) {
+                    filtered.add(sc);
+                }
+            } else if (sc.toolType != null) {
+                String title = getString(sc.toolType.titleRes).toLowerCase(Locale.US);
+                if (title.contains(sidebarSearchQuery)
+                        || sc.toolType.category.toLowerCase(Locale.US).contains(sidebarSearchQuery)) {
+                    filtered.add(sc);
+                }
+            }
+        }
+
+        if (filtered.isEmpty()) {
             TextView empty = new TextView(themedContext);
-            empty.setText("No favorite tools selected yet.\nStar tools from All Floating Tools.");
+            if (currentDrawerFilter == ToolType.DrawerFilter.APPS && selectedApps.isEmpty()) {
+                empty.setText("No installed apps pinned yet.\nTap the grid icon below to add apps.");
+            } else if (currentDrawerFilter == ToolType.DrawerFilter.FAVORITES) {
+                empty.setText("No favorite tools or apps yet.");
+            } else {
+                empty.setText("No matching tools or apps.");
+            }
             empty.setTextColor(themedContext.getColor(R.color.mf_text_secondary));
             empty.setTextSize(11f);
             empty.setGravity(Gravity.CENTER);
@@ -712,23 +918,66 @@ public class FloatingWindowService extends Service {
             return;
         }
 
-        for (ToolType t : ordered) {
+        int iconStyle = preferences.getSidebarIconStyle();
+        int accent = preferences.getAccentColorInt();
+
+        for (SidebarShortcut sc : filtered) {
             View item = themedInflater.inflate(R.layout.item_sidebar_drawer_tool, container, false);
+            FrameLayout iconFrame = item.findViewById(R.id.frame_drawer_icon_bg);
             ImageView icon = item.findViewById(R.id.iv_drawer_tool_icon);
             TextView label = item.findViewById(R.id.tv_drawer_tool_name);
             TextView cat = item.findViewById(R.id.tv_drawer_tool_cat);
-            icon.setImageResource(t.iconRes);
-            label.setText(t.titleRes);
-            boolean isFav = favs.contains(t.id);
-            cat.setText((isFav ? "★ " : "") + t.category);
 
-            attachDrawerToolGesture(item, t, scrollView, panel);
+            applySidebarIconStyle(iconFrame, iconStyle, accent);
+
+            if (sc.isExternalApp && sc.packageName != null) {
+                InstalledAppInfo info = appCache.get(sc.packageName);
+                if (info == null) continue;
+                icon.setImageTintList(null);
+                if (info.icon != null) {
+                    icon.setImageDrawable(info.icon);
+                } else {
+                    icon.setImageResource(R.drawable.ic_apps);
+                }
+                label.setText(info.appName);
+                String prefix = info.isFavorite ? "★ App" : "App";
+                cat.setText(prefix + (ExternalAppLauncher.isFreeformSupported(this) ? " • Freeform" : " • Shortcut"));
+                attachDrawerShortcutGesture(item, sc, info, scrollView, panel);
+            } else if (sc.toolType != null) {
+                ToolType t = sc.toolType;
+                icon.setImageResource(t.iconRes);
+                icon.setImageTintList(ColorStateList.valueOf(themedContext.getColor(R.color.mf_cyan_text)));
+                label.setText(t.titleRes);
+                boolean isFav = favTools.contains(t.id);
+                cat.setText((isFav ? "★ " : "") + t.category);
+                attachDrawerShortcutGesture(item, sc, null, scrollView, panel);
+            }
             container.addView(item);
         }
     }
 
+    private void applySidebarIconStyle(@Nullable FrameLayout iconFrame, int style, int accentColor) {
+        if (iconFrame == null) return;
+        if (style == 1) {
+            iconFrame.setBackground(null);
+        } else if (style == 2) {
+            GradientDrawable gd = new GradientDrawable();
+            gd.setShape(GradientDrawable.OVAL);
+            gd.setColor(themedContext.getColor(R.color.mf_surface_variant));
+            gd.setStroke(EdgeToEdgeHelper.dpToPx(this, 1), accentColor);
+            iconFrame.setBackground(gd);
+        } else {
+            iconFrame.setBackgroundResource(R.drawable.bg_pill_chip);
+        }
+    }
+
     @SuppressLint("ClickableViewAccessibility")
-    private void attachDrawerToolGesture(View item, ToolType toolType, ScrollView scrollView, View panel) {
+    private void attachDrawerShortcutGesture(
+            View item,
+            SidebarShortcut shortcut,
+            @Nullable InstalledAppInfo appInfo,
+            ScrollView scrollView,
+            View panel) {
         final int touchSlop = ViewConfiguration.get(themedContext).getScaledTouchSlop();
         final int minDragOutPx = EdgeToEdgeHelper.dpToPx(this, 48);
 
@@ -744,7 +993,7 @@ public class FloatingWindowService extends Service {
                     if (scrollView != null) scrollView.requestDisallowInterceptTouchEvent(true);
                     item.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
                     item.setAlpha(0.45f);
-                    showDragGhost(toolType, lastRawX, lastRawY, !isPointInsideView(panel, lastRawX, lastRawY));
+                    showDragGhost(shortcut, appInfo, lastRawX, lastRawY, !isPointInsideView(panel, lastRawX, lastRawY));
                 }
             };
 
@@ -752,6 +1001,7 @@ public class FloatingWindowService extends Service {
             public boolean onTouch(View v, MotionEvent event) {
                 switch (event.getActionMasked()) {
                     case MotionEvent.ACTION_DOWN:
+                        setSidebarInputFocusable(false);
                         downRawX = event.getRawX();
                         downRawY = event.getRawY();
                         lastRawX = downRawX;
@@ -775,7 +1025,7 @@ public class FloatingWindowService extends Service {
                                 if (scrollView != null) scrollView.requestDisallowInterceptTouchEvent(true);
                                 v.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
                                 v.setAlpha(0.45f);
-                                showDragGhost(toolType, lastRawX, lastRawY, !isPointInsideView(panel, lastRawX, lastRawY));
+                                showDragGhost(shortcut, appInfo, lastRawX, lastRawY, !isPointInsideView(panel, lastRawX, lastRawY));
                             } else if (Math.abs(dy) > touchSlop && Math.abs(dy) >= Math.abs(dx)) {
                                 v.removeCallbacks(longPressDragRunnable);
                                 v.setPressed(false);
@@ -806,7 +1056,8 @@ public class FloatingWindowService extends Service {
                             removeDragGhost();
                             if (event.getActionMasked() == MotionEvent.ACTION_UP && (outsidePanel || dist > minDragOutPx)) {
                                 collapseSidebar(true);
-                                openToolWindow(toolType, null, new Point(Math.round(releaseX), Math.round(releaseY)));
+                                launchSidebarShortcut(shortcut, appInfo,
+                                        new Point(Math.round(releaseX), Math.round(releaseY)));
                             }
                             return true;
                         }
@@ -815,7 +1066,7 @@ public class FloatingWindowService extends Service {
                             float dist = (float) Math.hypot(event.getRawX() - downRawX, event.getRawY() - downRawY);
                             if (dist <= touchSlop) {
                                 collapseSidebar(true);
-                                openToolWindow(toolType, null, null);
+                                launchSidebarShortcut(shortcut, appInfo, null);
                             }
                         }
                         return true;
@@ -823,6 +1074,35 @@ public class FloatingWindowService extends Service {
                 return false;
             }
         });
+    }
+
+    private void launchSidebarShortcut(
+            SidebarShortcut shortcut,
+            @Nullable InstalledAppInfo appInfo,
+            @Nullable Point dropCenter) {
+        if (shortcut.isExternalApp && shortcut.packageName != null) {
+            Rect bounds = ExternalAppLauncher.computeDefaultFreeformBounds(this, dropCenter);
+            ExternalAppLauncher.LaunchStatus status = ExternalAppLauncher.launchExternalApp(
+                    this, shortcut.packageName, bounds, true);
+            if (status == ExternalAppLauncher.LaunchStatus.LAUNCHED_FREEFORM) {
+                Toast.makeText(this,
+                        "Launched " + (appInfo != null ? appInfo.appName : shortcut.packageName) + " in freeform window",
+                        Toast.LENGTH_SHORT).show();
+            } else if (status == ExternalAppLauncher.LaunchStatus.LAUNCHED_NORMAL) {
+                Toast.makeText(this,
+                        "Opened " + (appInfo != null ? appInfo.appName : shortcut.packageName)
+                                + " (freeform windows restricted by device)",
+                        Toast.LENGTH_SHORT).show();
+            } else if (status == ExternalAppLauncher.LaunchStatus.APP_UNINSTALLED) {
+                String label = appInfo != null ? appInfo.appName : shortcut.packageName;
+                Toast.makeText(this, getString(R.string.app_uninstalled_removed, label), Toast.LENGTH_LONG).show();
+                populateSidebarTools();
+            } else {
+                Toast.makeText(this, "Unable to launch app", Toast.LENGTH_SHORT).show();
+            }
+        } else if (shortcut.toolType != null) {
+            openToolWindow(shortcut.toolType, null, dropCenter, false);
+        }
     }
 
     private boolean isPointInsideView(View view, float rawX, float rawY) {
@@ -835,15 +1115,24 @@ public class FloatingWindowService extends Service {
                 && rawY >= loc[1] && rawY <= loc[1] + view.getHeight();
     }
 
-    private void showDragGhost(ToolType toolType, float rawX, float rawY, boolean outsidePanel) {
+    private void showDragGhost(SidebarShortcut shortcut, @Nullable InstalledAppInfo appInfo,
+                               float rawX, float rawY, boolean outsidePanel) {
         removeDragGhost();
         dragGhostView = themedInflater.inflate(R.layout.overlay_drag_ghost, null);
         ImageView icon = dragGhostView.findViewById(R.id.iv_drag_ghost_icon);
         TextView title = dragGhostView.findViewById(R.id.tv_drag_ghost_title);
         tvDragGhostHint = dragGhostView.findViewById(R.id.tv_drag_ghost_hint);
 
-        icon.setImageResource(toolType.iconRes);
-        title.setText(toolType.titleRes);
+        if (shortcut.isExternalApp && appInfo != null) {
+            icon.setImageTintList(null);
+            if (appInfo.icon != null) icon.setImageDrawable(appInfo.icon);
+            else icon.setImageResource(R.drawable.ic_apps);
+            title.setText(appInfo.appName);
+        } else if (shortcut.toolType != null) {
+            icon.setImageResource(shortcut.toolType.iconRes);
+            icon.setImageTintList(ColorStateList.valueOf(themedContext.getColor(R.color.mf_cyan_text)));
+            title.setText(shortcut.toolType.titleRes);
+        }
         updateGhostDropState(outsidePanel);
 
         int halfW = EdgeToEdgeHelper.dpToPx(this, 86);
@@ -884,7 +1173,7 @@ public class FloatingWindowService extends Service {
     private void updateGhostDropState(boolean outsidePanel) {
         if (dragGhostView == null || tvDragGhostHint == null) return;
         tvDragGhostHint.setText(outsidePanel ? R.string.drawer_drag_hint_release : R.string.drawer_drag_hint_move);
-        tvDragGhostHint.setTextColor(themedContext.getColor(outsidePanel ? R.color.mf_success : R.color.electric_cyan));
+        tvDragGhostHint.setTextColor(themedContext.getColor(outsidePanel ? R.color.mf_success : R.color.mf_cyan_text));
         dragGhostView.setScaleX(outsidePanel ? 1.05f : 0.96f);
         dragGhostView.setScaleY(outsidePanel ? 1.05f : 0.96f);
     }
@@ -919,6 +1208,7 @@ public class FloatingWindowService extends Service {
     }
 
     private void removeSidebar() {
+        mainHandler.removeCallbacks(reassertOverlaysRunnable);
         removeDragGhost();
         sidebarExpanded = false;
         if (sidebarView != null) {
@@ -929,45 +1219,94 @@ public class FloatingWindowService extends Service {
 
     // ==================== FLOATING WINDOW ENGINE ====================
 
+    @Nullable
+    private FloatingWindowInstance findExistingWindowByTool(ToolType toolType) {
+        for (String id : zOrderManager.getTopToBottomIds()) {
+            FloatingWindowInstance inst = windows.get(id);
+            if (inst != null && inst.state.toolType == toolType) {
+                return inst;
+            }
+        }
+        return null;
+    }
+
     private void openToolWindow(ToolType toolType, @Nullable FloatingWindowState restoredState) {
-        openToolWindow(toolType, restoredState, null);
+        openToolWindow(toolType, restoredState, null, false);
+    }
+
+    private void openToolWindow(ToolType toolType, @Nullable FloatingWindowState restoredState,
+                                @Nullable Point dropCenter, boolean forceNewInstance) {
+        openToolWindow(toolType, restoredState, dropCenter, forceNewInstance, null);
     }
 
     @SuppressLint("ClickableViewAccessibility")
     private void openToolWindow(ToolType toolType, @Nullable FloatingWindowState restoredState,
-                                @Nullable Point dropCenter) {
+                                @Nullable Point dropCenter, boolean forceNewInstance,
+                                @Nullable Bundle savedMiniAppState) {
+        // Prevent unintended duplicate windows for the same tool by default
+        if (restoredState == null && !forceNewInstance && !preferences.isAllowDuplicateWindows()) {
+            FloatingWindowInstance existing = findExistingWindowByTool(toolType);
+            if (existing != null) {
+                if (dropCenter != null && !existing.state.maximized) {
+                    Rect safe = WindowBoundsHelper.getSafeScreenBounds(windowManager, this);
+                    WindowBoundsHelper.ClampedPoint clamped = WindowBoundsHelper.clampWindowPosition(
+                            dropCenter.x - existing.params.width / 2,
+                            dropCenter.y - existing.params.height / 2,
+                            existing.params.width, existing.params.height, safe);
+                    existing.params.x = clamped.x;
+                    existing.params.y = clamped.y;
+                    existing.state.x = clamped.x;
+                    existing.state.y = clamped.y;
+                    if (existing.rootView.isAttachedToWindow()) {
+                        windowManager.updateViewLayout(existing.rootView, existing.params);
+                    }
+                }
+                restoreOrFocusWindow(existing.state.windowId);
+                return;
+            }
+        }
+
         MultiFloatApp.get().getToolsRepository().recordToolOpened(toolType);
 
-        DisplayMetrics dm = screenMetrics();
+        Rect safe = WindowBoundsHelper.getSafeScreenBounds(windowManager, this);
         float scale = preferences.getDefaultWindowScalePercent() / 100f;
-        int defaultW = Math.min(dm.widthPixels - 40, Math.round(EdgeToEdgeHelper.dpToPx(this, toolType.defaultWidthDp) * scale));
-        int defaultH = Math.min(dm.heightPixels - 160, Math.round(EdgeToEdgeHelper.dpToPx(this, toolType.defaultHeightDp) * scale));
+        int minW = EdgeToEdgeHelper.dpToPx(this, 220);
+        int minH = EdgeToEdgeHelper.dpToPx(this, 180);
+        int defaultW = Math.max(minW, Math.min(safe.width(), Math.round(EdgeToEdgeHelper.dpToPx(this, toolType.defaultWidthDp) * scale)));
+        int defaultH = Math.max(minH, Math.min(safe.height(), Math.round(EdgeToEdgeHelper.dpToPx(this, toolType.defaultHeightDp) * scale)));
 
-        int offset = (windows.size() % 4) * 32;
-        int x = 36 + offset;
-        int y = 140 + offset;
+        int offset = (windows.size() % 4) * EdgeToEdgeHelper.dpToPx(this, 14);
+        int x = safe.left + EdgeToEdgeHelper.dpToPx(this, 10) + offset;
+        int y = safe.top + EdgeToEdgeHelper.dpToPx(this, 10) + offset;
         int w = defaultW;
         int h = defaultH;
         float alpha = preferences.getWindowOpacityPercent() / 100f;
 
         if (restoredState != null) {
+            w = Math.max(minW, Math.min(safe.width(), restoredState.widthPx));
+            h = Math.max(minH, Math.min(safe.height(), restoredState.heightPx));
             x = restoredState.x;
             y = restoredState.y;
-            w = restoredState.widthPx;
-            h = restoredState.heightPx;
             alpha = restoredState.alpha;
         } else if (dropCenter != null) {
-            x = Math.max(16, Math.min(dm.widthPixels - w - 16, dropCenter.x - w / 2));
-            y = Math.max(60, Math.min(dm.heightPixels - h - 80, dropCenter.y - h / 2));
-            preferences.saveToolPosition(toolType.id, x, y, w, h);
+            x = dropCenter.x - w / 2;
+            y = dropCenter.y - h / 2;
         } else if (preferences.isRememberWindowPositions()) {
             int[] saved = preferences.getSavedToolGeometry(toolType.id);
             if (saved != null) {
-                x = Math.max(0, Math.min(dm.widthPixels - 200, saved[0]));
-                y = Math.max(0, Math.min(dm.heightPixels - 200, saved[1]));
-                if (saved[2] > 200) w = Math.min(dm.widthPixels - 20, saved[2]);
-                if (saved[3] > 200) h = Math.min(dm.heightPixels - 100, saved[3]);
+                if (saved[2] >= minW) w = Math.min(safe.width(), saved[2]);
+                if (saved[3] >= minH) h = Math.min(safe.height(), saved[3]);
+                x = saved[0];
+                y = saved[1];
             }
+        }
+
+        WindowBoundsHelper.ClampedPoint clamped = WindowBoundsHelper.clampWindowPosition(x, y, w, h, safe);
+        x = clamped.x;
+        y = clamped.y;
+
+        if (dropCenter != null && restoredState == null) {
+            preferences.saveToolPosition(toolType.id, x, y, w, h);
         }
 
         String winId = restoredState != null && !restoredState.windowId.isEmpty()
@@ -978,12 +1317,16 @@ public class FloatingWindowService extends Service {
         if (restoredState != null) {
             state.minimized = restoredState.minimized;
             state.maximized = restoredState.maximized;
+            state.savedX = restoredState.savedX;
+            state.savedY = restoredState.savedY;
+            state.savedWidthPx = restoredState.savedWidthPx;
+            state.savedHeightPx = restoredState.savedHeightPx;
         }
 
         View winView = themedInflater.inflate(R.layout.overlay_floating_window, null);
         WindowManager.LayoutParams params = new WindowManager.LayoutParams(
                 w, h, overlayWindowType(),
-                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
                 PixelFormat.TRANSLUCENT
         );
         params.gravity = Gravity.TOP | Gravity.START;
@@ -995,7 +1338,7 @@ public class FloatingWindowService extends Service {
         ivIcon.setImageResource(toolType.iconRes);
         tvTitle.setText(title);
 
-        BaseMiniAppController controller = MiniAppFactory.create(toolType, themedContext, new BaseMiniAppController.HostCallback() {
+        MiniApp miniApp = MiniAppRegistry.getInstance().create(toolType, themedContext, new MiniApp.HostCallback() {
             @Override
             public void onInputFocusRequested(boolean focusable) {
                 setWindowInputFocusable(winId, focusable);
@@ -1016,7 +1359,7 @@ public class FloatingWindowService extends Service {
             }
 
             @Override
-            public void onOpenFullScreenTool(ToolType type) {
+            public void onOpenFullScreenTool(@NonNull ToolType type) {
                 if (type == ToolType.QR_SCANNER) {
                     Intent i = new Intent(FloatingWindowService.this, QrScannerActivity.class);
                     i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -1026,90 +1369,93 @@ public class FloatingWindowService extends Service {
         });
 
         FrameLayout contentHost = winView.findViewById(R.id.window_content_container);
-        contentHost.addView(controller.createView(themedInflater, contentHost));
+        MiniAppContainerHost miniAppHost = new MiniAppContainerHost();
+        miniAppHost.attach(miniApp, themedInflater, contentHost, savedMiniAppState, state.minimized);
 
-        FloatingWindowInstance instance = new FloatingWindowInstance(state, winView, params, controller);
+        FloatingWindowInstance instance = new FloatingWindowInstance(state, winView, params, miniAppHost);
         windows.put(winId, instance);
-
-        applyWindowChromeStyling(instance, true);
+        zOrderManager.registerWindow(winId);
+        syncWindowZIndicesAndChrome(winId);
         winView.setAlpha(alpha);
 
-        // Title Bar Dragging & Focus
+        if (winView instanceof FloatingWindowFrame) {
+            ((FloatingWindowFrame) winView).setOnWindowTouchListener(new FloatingWindowFrame.OnWindowTouchListener() {
+                @Override
+                public void onWindowTouchDown() {
+                    if (!zOrderManager.isTopWindow(winId)) {
+                        promoteWindowZOrderLogical(winId);
+                        pendingBringToFrontWindowId = winId;
+                    } else {
+                        promoteWindowZOrderLogical(winId);
+                    }
+                }
+
+                @Override
+                public void onWindowTouchFinished() {
+                    if (winId.equals(pendingBringToFrontWindowId)) {
+                        pendingBringToFrontWindowId = null;
+                        commitWindowZOrderToWindowManager(winId);
+                    }
+                }
+            });
+        }
+
+        // Title Bar Dragging & Focus with touchSlop + system-inset safe bounds clamping
+        final int dragTouchSlop = ViewConfiguration.get(themedContext).getScaledTouchSlop();
         View titleBar = winView.findViewById(R.id.window_title_bar);
         titleBar.setOnTouchListener(new View.OnTouchListener() {
             int initX, initY;
             float downX, downY;
+            boolean dragging;
 
             @Override
             public boolean onTouch(View v, MotionEvent event) {
-                switch (event.getAction()) {
+                switch (event.getActionMasked()) {
                     case MotionEvent.ACTION_DOWN:
-                        focusWindow(winId);
                         setWindowInputFocusable(winId, false);
                         initX = params.x;
                         initY = params.y;
                         downX = event.getRawX();
                         downY = event.getRawY();
+                        dragging = false;
                         return true;
                     case MotionEvent.ACTION_MOVE:
-                        int nx = initX + (int) (event.getRawX() - downX);
-                        int ny = initY + (int) (event.getRawY() - downY);
-                        DisplayMetrics currentDm = screenMetrics();
-                        params.x = Math.max(-params.width / 2, Math.min(currentDm.widthPixels - 120, nx));
-                        params.y = Math.max(40, Math.min(currentDm.heightPixels - 140, ny));
-                        state.x = params.x;
-                        state.y = params.y;
-                        windowManager.updateViewLayout(winView, params);
-                        return true;
-                    case MotionEvent.ACTION_UP:
-                        if (preferences.isEdgeSnapEnabled()) {
-                            snapWindowToEdge(instance);
+                        float dx = event.getRawX() - downX;
+                        float dy = event.getRawY() - downY;
+                        if (!dragging && Math.hypot(dx, dy) > dragTouchSlop) {
+                            dragging = true;
                         }
-                        preferences.saveToolPosition(toolType.id, state.x, state.y, state.widthPx, state.heightPx);
-                        saveSessionSnapshot();
-                        return true;
-                }
-                return false;
-            }
-        });
-
-        // Bottom-Right Resize Handle
-        View resizeHandle = winView.findViewById(R.id.iv_resize_handle);
-        resizeHandle.setOnTouchListener(new View.OnTouchListener() {
-            int initW, initH;
-            float downX, downY;
-
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                switch (event.getAction()) {
-                    case MotionEvent.ACTION_DOWN:
-                        focusWindow(winId);
-                        initW = params.width;
-                        initH = params.height;
-                        downX = event.getRawX();
-                        downY = event.getRawY();
-                        return true;
-                    case MotionEvent.ACTION_MOVE:
-                        DisplayMetrics currentDm = screenMetrics();
-                        int minW = EdgeToEdgeHelper.dpToPx(FloatingWindowService.this, 230);
-                        int minH = EdgeToEdgeHelper.dpToPx(FloatingWindowService.this, 190);
-                        int nw = Math.max(minW, Math.min(currentDm.widthPixels - 24, initW + (int) (event.getRawX() - downX)));
-                        int nh = Math.max(minH, Math.min(currentDm.heightPixels - 120, initH + (int) (event.getRawY() - downY)));
-                        params.width = nw;
-                        params.height = nh;
-                        state.widthPx = nw;
-                        state.heightPx = nh;
-                        state.maximized = false;
-                        windowManager.updateViewLayout(winView, params);
+                        if (dragging) {
+                            Rect curSafe = WindowBoundsHelper.getSafeScreenBounds(windowManager, FloatingWindowService.this);
+                            WindowBoundsHelper.ClampedPoint p = WindowBoundsHelper.clampWindowPosition(
+                                    initX + Math.round(dx), initY + Math.round(dy),
+                                    params.width, params.height, curSafe);
+                            params.x = p.x;
+                            params.y = p.y;
+                            state.x = p.x;
+                            state.y = p.y;
+                            if (winView.isAttachedToWindow()) {
+                                windowManager.updateViewLayout(winView, params);
+                            }
+                        }
                         return true;
                     case MotionEvent.ACTION_UP:
-                        preferences.saveToolPosition(toolType.id, state.x, state.y, state.widthPx, state.heightPx);
-                        saveSessionSnapshot();
+                    case MotionEvent.ACTION_CANCEL:
+                        if (dragging) {
+                            if (preferences.isEdgeSnapEnabled()) {
+                                snapWindowToEdge(instance);
+                            }
+                            preferences.saveToolPosition(toolType.id, state.x, state.y, state.widthPx, state.heightPx);
+                            saveSessionSnapshot();
+                        }
                         return true;
                 }
                 return false;
             }
         });
+
+        // 8-Direction Corner & Edge Visual Resize Handles
+        attachAllResizeHandles(instance);
 
         // Opacity Quick Slider
         SeekBar seekOpacity = winView.findViewById(R.id.seek_win_opacity);
@@ -1140,9 +1486,12 @@ public class FloatingWindowService extends Service {
         }
 
         windowManager.addView(winView, params);
-        focusWindow(winId);
+        if (state.minimized) {
+            refreshTaskbarDock(null);
+        }
+        scheduleReassertSystemOverlays();
 
-        if (!state.minimized && preferences.isWindowAnimationEnabled()) {
+        if (!state.minimized && restoredState == null && preferences.isWindowAnimationEnabled()) {
             winView.setScaleX(0.86f);
             winView.setScaleY(0.86f);
             winView.setAlpha(0f);
@@ -1156,17 +1505,129 @@ public class FloatingWindowService extends Service {
     }
 
     private void snapWindowToEdge(FloatingWindowInstance inst) {
-        DisplayMetrics dm = screenMetrics();
-        int snapThreshold = EdgeToEdgeHelper.dpToPx(this, 24);
-        if (inst.params.x < snapThreshold && inst.params.x > -snapThreshold) {
-            inst.params.x = 12;
-        } else if (Math.abs((inst.params.x + inst.params.width) - dm.widthPixels) < snapThreshold) {
-            inst.params.x = dm.widthPixels - inst.params.width - 12;
+        Rect safe = WindowBoundsHelper.getSafeScreenBounds(windowManager, this);
+        int snapThreshold = EdgeToEdgeHelper.dpToPx(this, 22);
+        if (Math.abs(inst.params.x - safe.left) < snapThreshold) {
+            inst.params.x = safe.left;
+        } else if (Math.abs((inst.params.x + inst.params.width) - safe.right) < snapThreshold) {
+            inst.params.x = safe.right - inst.params.width;
         }
         inst.state.x = inst.params.x;
         if (inst.rootView.isAttachedToWindow()) {
             windowManager.updateViewLayout(inst.rootView, inst.params);
         }
+    }
+
+    private void attachAllResizeHandles(FloatingWindowInstance inst) {
+        View root = inst.rootView;
+        attachDirectionalResize(inst, root.findViewById(R.id.resize_edge_left),
+                root.findViewById(R.id.pill_resize_left), WindowResizeCalculator.Direction.LEFT);
+        attachDirectionalResize(inst, root.findViewById(R.id.resize_edge_right),
+                root.findViewById(R.id.pill_resize_right), WindowResizeCalculator.Direction.RIGHT);
+        attachDirectionalResize(inst, root.findViewById(R.id.resize_edge_top),
+                root.findViewById(R.id.pill_resize_top), WindowResizeCalculator.Direction.TOP);
+        attachDirectionalResize(inst, root.findViewById(R.id.resize_edge_bottom),
+                root.findViewById(R.id.pill_resize_bottom), WindowResizeCalculator.Direction.BOTTOM);
+
+        attachDirectionalResize(inst, root.findViewById(R.id.resize_corner_top_left),
+                root.findViewById(R.id.iv_resize_tl), WindowResizeCalculator.Direction.TOP_LEFT);
+        attachDirectionalResize(inst, root.findViewById(R.id.resize_corner_top_right),
+                root.findViewById(R.id.iv_resize_tr), WindowResizeCalculator.Direction.TOP_RIGHT);
+        attachDirectionalResize(inst, root.findViewById(R.id.resize_corner_bottom_left),
+                root.findViewById(R.id.iv_resize_bl), WindowResizeCalculator.Direction.BOTTOM_LEFT);
+        attachDirectionalResize(inst, root.findViewById(R.id.resize_corner_bottom_right),
+                root.findViewById(R.id.iv_resize_handle), WindowResizeCalculator.Direction.BOTTOM_RIGHT);
+    }
+
+    @SuppressLint("ClickableViewAccessibility")
+    private void attachDirectionalResize(FloatingWindowInstance inst, @Nullable View touchTarget,
+                                         @Nullable View visualGlyph, WindowResizeCalculator.Direction dir) {
+        if (touchTarget == null) return;
+        final TextView tvHint = inst.rootView.findViewById(R.id.tv_win_hint);
+
+        touchTarget.setOnTouchListener(new View.OnTouchListener() {
+            int initX, initY, initW, initH;
+            float downX, downY;
+
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                switch (event.getActionMasked()) {
+                    case MotionEvent.ACTION_DOWN:
+                        setWindowInputFocusable(inst.state.windowId, false);
+                        initX = inst.params.x;
+                        initY = inst.params.y;
+                        initW = inst.params.width;
+                        initH = inst.params.height;
+                        downX = event.getRawX();
+                        downY = event.getRawY();
+                        if (visualGlyph != null) {
+                            visualGlyph.animate().scaleX(1.25f).scaleY(1.25f).alpha(1f).setDuration(100).start();
+                        }
+                        v.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
+                        return true;
+
+                    case MotionEvent.ACTION_MOVE:
+                        Rect raw = WindowBoundsHelper.getRawScreenBounds(windowManager);
+                        Rect safe = WindowBoundsHelper.getSafeScreenBounds(windowManager, FloatingWindowService.this);
+                        int minW = EdgeToEdgeHelper.dpToPx(FloatingWindowService.this, 220);
+                        int minH = EdgeToEdgeHelper.dpToPx(FloatingWindowService.this, 180);
+                        int maxW = Math.max(minW, safe.width());
+                        int maxH = Math.max(minH, safe.height());
+                        int sideMargin = Math.max(0, safe.left);
+                        int topMargin = Math.max(0, safe.top);
+                        int bottomMargin = Math.max(0, raw.bottom - safe.bottom);
+
+                        WindowResizeCalculator.Bounds b = WindowResizeCalculator.computeResizedBounds(
+                                dir,
+                                initX, initY, initW, initH,
+                                Math.round(event.getRawX() - downX),
+                                Math.round(event.getRawY() - downY),
+                                minW, minH, maxW, maxH,
+                                raw.width(), raw.height(),
+                                sideMargin, topMargin, bottomMargin
+                        );
+
+                        inst.params.x = b.x;
+                        inst.params.y = b.y;
+                        inst.params.width = b.width;
+                        inst.params.height = b.height;
+                        inst.state.x = b.x;
+                        inst.state.y = b.y;
+                        inst.state.widthPx = b.width;
+                        inst.state.heightPx = b.height;
+                        inst.state.maximized = false;
+                        if (inst.rootView.isAttachedToWindow()) {
+                            windowManager.updateViewLayout(inst.rootView, inst.params);
+                        }
+
+                        if (tvHint != null) {
+                            DisplayMetrics dm = screenMetrics();
+                            float density = dm.density > 0 ? dm.density : 1f;
+                            int wDp = Math.round(b.width / density);
+                            int hDp = Math.round(b.height / density);
+                            tvHint.setText("Size: " + wDp + " × " + hDp + " dp");
+                            tvHint.setTextColor(preferences.getAccentColorInt());
+                        }
+                        return true;
+
+                    case MotionEvent.ACTION_UP:
+                    case MotionEvent.ACTION_CANCEL:
+                        if (visualGlyph != null) {
+                            float restAlpha = inst.state.focused ? 0.9f : 0.55f;
+                            visualGlyph.animate().scaleX(1f).scaleY(1f).alpha(restAlpha).setDuration(120).start();
+                        }
+                        if (tvHint != null) {
+                            tvHint.setText(R.string.win_hint_move_resize);
+                            tvHint.setTextColor(themedContext.getColor(R.color.mf_text_muted));
+                        }
+                        preferences.saveToolPosition(inst.state.toolType.id,
+                                inst.state.x, inst.state.y, inst.state.widthPx, inst.state.heightPx);
+                        saveSessionSnapshot();
+                        return true;
+                }
+                return false;
+            }
+        });
     }
 
     private void applyWindowChromeStyling(FloatingWindowInstance inst, boolean isFocused) {
@@ -1175,64 +1636,446 @@ public class FloatingWindowService extends Service {
         bg.setCornerRadius(radiusPx);
         bg.setColor(themedContext.getColor(R.color.mf_window_bg));
         int strokeWidth = EdgeToEdgeHelper.dpToPx(this, isFocused ? 2 : 1);
+        int accentColor = preferences.getAccentColorInt();
         int strokeColor = isFocused
-                ? preferences.getAccentColorInt()
+                ? accentColor
                 : themedContext.getColor(R.color.mf_card_stroke);
         bg.setStroke(strokeWidth, strokeColor);
         inst.cardInner.setBackground(bg);
         inst.cardInner.setClipToOutline(true);
-        inst.focusDot.setAlpha(isFocused ? 1.0f : 0.25f);
+        inst.rootView.setElevation(EdgeToEdgeHelper.dpToPx(this, isFocused ? 18 : 6));
+        inst.focusDot.setAlpha(isFocused ? 1.0f : 0.35f);
+
+        int handleColor = isFocused ? accentColor : themedContext.getColor(R.color.mf_resize_rest);
+        float handleAlpha = isFocused ? 0.9f : 0.55f;
+        ColorStateList tintList = ColorStateList.valueOf(handleColor);
+        int[] cornerIds = new int[]{
+                R.id.iv_resize_tl, R.id.iv_resize_tr, R.id.iv_resize_bl, R.id.iv_resize_handle
+        };
+        for (int id : cornerIds) {
+            ImageView iv = inst.rootView.findViewById(id);
+            if (iv != null) {
+                iv.setImageTintList(tintList);
+                iv.setAlpha(handleAlpha);
+            }
+        }
+        int[] pillIds = new int[]{
+                R.id.pill_resize_left, R.id.pill_resize_right, R.id.pill_resize_top, R.id.pill_resize_bottom
+        };
+        for (int id : pillIds) {
+            View pill = inst.rootView.findViewById(id);
+            if (pill != null) {
+                pill.setBackgroundTintList(tintList);
+                pill.setAlpha(handleAlpha);
+            }
+        }
     }
 
     private void setWindowInputFocusable(String windowId, boolean focusable) {
         FloatingWindowInstance inst = windows.get(windowId);
         if (inst == null || !inst.rootView.isAttachedToWindow()) return;
+        int prevFlags = inst.params.flags;
         if (focusable) {
             inst.params.flags &= ~WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
         } else {
             inst.params.flags |= WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
         }
-        windowManager.updateViewLayout(inst.rootView, inst.params);
+        if (prevFlags != inst.params.flags) {
+            windowManager.updateViewLayout(inst.rootView, inst.params);
+        }
     }
 
-    private void focusWindow(String windowId) {
+    private void promoteWindowZOrderLogical(String windowId) {
         FloatingWindowInstance target = windows.get(windowId);
         if (target == null) return;
+        zOrderManager.bringToFront(windowId);
+        syncWindowZIndicesAndChrome(windowId);
+        broadcastWindowStates();
+    }
+
+    private void syncWindowZIndicesAndChrome(@Nullable String focusedWindowId) {
         for (FloatingWindowInstance inst : windows.values()) {
-            boolean isTarget = inst == target;
+            int z = zOrderManager.getZIndex(inst.state.windowId);
+            inst.state.zIndex = Math.max(0, z);
+            boolean isTarget = focusedWindowId != null && focusedWindowId.equals(inst.state.windowId) && !inst.state.minimized;
             inst.state.focused = isTarget;
+            inst.miniAppHost.setFocused(isTarget);
             applyWindowChromeStyling(inst, isTarget);
         }
-        // Bring target to top of WindowManager z-order
-        if (target.rootView.isAttachedToWindow() && windows.size() > 1) {
+    }
+
+    private void commitWindowZOrderToWindowManager(String windowId) {
+        FloatingWindowInstance target = windows.get(windowId);
+        if (target == null || !target.rootView.isAttachedToWindow()) return;
+        if (windows.size() > 1) {
+            View focusedChild = target.rootView.findFocus();
             try {
                 windowManager.removeViewImmediate(target.rootView);
                 windowManager.addView(target.rootView, target.params);
+                if (focusedChild != null) {
+                    focusedChild.post(focusedChild::requestFocus);
+                }
+            } catch (Exception ignored) {}
+            scheduleReassertSystemOverlays();
+        }
+        saveSessionSnapshot();
+        broadcastWindowStates();
+    }
+
+    private void scheduleReassertSystemOverlays() {
+        mainHandler.removeCallbacks(reassertOverlaysRunnable);
+        View sidebarPanel = sidebarView != null ? sidebarView.findViewById(R.id.sidebar_panel) : null;
+        if (sidebarPanel != null && sidebarPanel.getVisibility() == View.VISIBLE) {
+            mainHandler.postDelayed(reassertOverlaysRunnable, 220L);
+        } else {
+            reassertSystemOverlaysOnTop();
+        }
+    }
+
+    private void reassertSystemOverlaysOnTop() {
+        bringOverlayAboveWindows(taskbarDockView, taskbarDockParams);
+        bringOverlayAboveWindows(bubbleView, bubbleParams);
+        bringOverlayAboveWindows(sidebarView, sidebarParams);
+        bringOverlayAboveWindows(bubbleMenuView, bubbleMenuParams);
+        bringOverlayAboveWindows(dragGhostView, dragGhostParams);
+    }
+
+    private void bringOverlayAboveWindows(@Nullable View overlay, @Nullable WindowManager.LayoutParams params) {
+        if (overlay != null && params != null && overlay.isAttachedToWindow()) {
+            try {
+                windowManager.removeViewImmediate(overlay);
+                windowManager.addView(overlay, params);
             } catch (Exception ignored) {}
         }
-        broadcastWindowStates();
+    }
+
+    // ==================== BOTTOM TASKBAR DOCK ====================
+
+    @Nullable
+    private View refreshTaskbarDock(@Nullable String newlyMinimizedWindowId) {
+        List<FloatingWindowInstance> minimized = new ArrayList<>();
+        for (String id : zOrderManager.getBottomToTopIds()) {
+            FloatingWindowInstance inst = windows.get(id);
+            if (inst != null && inst.state.minimized) {
+                minimized.add(inst);
+            }
+        }
+
+        if (minimized.isEmpty()) {
+            removeTaskbarDockAnimated();
+            return null;
+        }
+
+        boolean newlyCreated = false;
+        if (taskbarDockView == null) {
+            taskbarDockView = themedInflater.inflate(R.layout.overlay_taskbar_dock, null);
+            taskbarDockParams = new WindowManager.LayoutParams(
+                    WindowManager.LayoutParams.WRAP_CONTENT,
+                    WindowManager.LayoutParams.WRAP_CONTENT,
+                    overlayWindowType(),
+                    WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+                    PixelFormat.TRANSLUCENT
+            );
+            taskbarDockParams.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
+            taskbarDockParams.y = EdgeToEdgeHelper.dpToPx(this, 24);
+            windowManager.addView(taskbarDockView, taskbarDockParams);
+            newlyCreated = true;
+        } else {
+            taskbarDockView.animate().cancel();
+            taskbarDockView.setTranslationY(0f);
+            taskbarDockView.setAlpha(1f);
+            taskbarDockView.setScaleX(1f);
+            taskbarDockView.setScaleY(1f);
+        }
+
+        LinearLayout container = taskbarDockView.findViewById(R.id.taskbar_dock_items_container);
+        container.removeAllViews();
+
+        View targetAnchor = null;
+        for (FloatingWindowInstance inst : minimized) {
+            View item = themedInflater.inflate(R.layout.item_taskbar_dock_icon, container, false);
+            item.setTag(inst.state.windowId);
+            ImageView ivIcon = item.findViewById(R.id.iv_dock_icon);
+            TextView tvLabel = item.findViewById(R.id.tv_dock_label);
+            View indicator = item.findViewById(R.id.view_dock_indicator);
+
+            ivIcon.setImageResource(inst.state.toolType.iconRes);
+            ivIcon.setImageTintList(ColorStateList.valueOf(themedContext.getColor(R.color.mf_cyan_text)));
+            tvLabel.setText(inst.state.title);
+            indicator.setBackgroundColor(preferences.getAccentColorInt());
+
+            item.setOnClickListener(v -> restoreOrFocusWindow(inst.state.windowId));
+            item.setOnLongClickListener(v -> {
+                String closedTitle = inst.state.title;
+                closeWindow(inst.state.windowId);
+                Toast.makeText(this, "Closed " + closedTitle, Toast.LENGTH_SHORT).show();
+                return true;
+            });
+
+            if (newlyMinimizedWindowId != null && newlyMinimizedWindowId.equals(inst.state.windowId)) {
+                targetAnchor = item;
+                if (preferences.isWindowAnimationEnabled()) {
+                    item.setScaleX(0.35f);
+                    item.setScaleY(0.35f);
+                    item.setAlpha(0f);
+                    item.animate()
+                            .scaleX(1f)
+                            .scaleY(1f)
+                            .alpha(1f)
+                            .setStartDelay(130L)
+                            .setDuration(220L)
+                            .setInterpolator(new OvershootInterpolator(1.5f))
+                            .start();
+                }
+            }
+            container.addView(item);
+        }
+
+        if (newlyCreated && preferences.isWindowAnimationEnabled()) {
+            taskbarDockView.setTranslationY(EdgeToEdgeHelper.dpToPx(this, 24));
+            taskbarDockView.setAlpha(0f);
+            taskbarDockView.animate()
+                    .translationY(0f)
+                    .alpha(1f)
+                    .setDuration(200L)
+                    .setInterpolator(new DecelerateInterpolator())
+                    .start();
+        }
+        return targetAnchor;
+    }
+
+    @Nullable
+    private View findDockIconView(String windowId) {
+        if (taskbarDockView == null || windowId == null) return null;
+        LinearLayout container = taskbarDockView.findViewById(R.id.taskbar_dock_items_container);
+        if (container == null) return null;
+        for (int i = 0; i < container.getChildCount(); i++) {
+            View child = container.getChildAt(i);
+            if (windowId.equals(child.getTag())) {
+                return child;
+            }
+        }
+        return null;
+    }
+
+    private Point getDockTargetCenter(@Nullable View anchorItem) {
+        if (anchorItem != null && anchorItem.isAttachedToWindow() && anchorItem.getWidth() > 0) {
+            int[] loc = new int[2];
+            anchorItem.getLocationOnScreen(loc);
+            return new Point(loc[0] + anchorItem.getWidth() / 2, loc[1] + anchorItem.getHeight() / 2);
+        }
+        Rect safe = WindowBoundsHelper.getSafeScreenBounds(windowManager, this);
+        return new Point(safe.centerX(), safe.bottom - EdgeToEdgeHelper.dpToPx(this, 36));
+    }
+
+    private void removeTaskbarDockAnimated() {
+        if (taskbarDockView == null) return;
+        final View viewToRemove = taskbarDockView;
+        if (preferences.isWindowAnimationEnabled() && viewToRemove.isAttachedToWindow()) {
+            viewToRemove.animate()
+                    .translationY(EdgeToEdgeHelper.dpToPx(this, 24))
+                    .alpha(0f)
+                    .setDuration(160L)
+                    .withEndAction(() -> {
+                        if (taskbarDockView == viewToRemove) {
+                            removeTaskbarDock();
+                        }
+                    })
+                    .start();
+        } else {
+            removeTaskbarDock();
+        }
+    }
+
+    private void removeTaskbarDock() {
+        if (taskbarDockView != null) {
+            taskbarDockView.animate().cancel();
+            try { windowManager.removeView(taskbarDockView); } catch (Exception ignored) {}
+            taskbarDockView = null;
+            taskbarDockParams = null;
+        }
+    }
+
+    private void cancelWindowTransition(FloatingWindowInstance inst) {
+        if (inst.transitionAnimator != null) {
+            inst.transitionAnimator.cancel();
+            inst.transitionAnimator = null;
+        }
+        inst.rootView.animate().cancel();
+        inst.rootView.setScaleX(1f);
+        inst.rootView.setScaleY(1f);
+        inst.rootView.setAlpha(inst.state.alpha);
+        inst.params.x = inst.state.x;
+        inst.params.y = inst.state.y;
+    }
+
+    @Nullable
+    private String findTopVisibleWindowId() {
+        for (String id : zOrderManager.getTopToBottomIds()) {
+            FloatingWindowInstance inst = windows.get(id);
+            if (inst != null && !inst.state.minimized) {
+                return id;
+            }
+        }
+        return null;
     }
 
     private void minimizeWindow(String windowId) {
         FloatingWindowInstance inst = windows.get(windowId);
         if (inst == null) return;
+        if (windowId.equals(pendingBringToFrontWindowId)) {
+            pendingBringToFrontWindowId = null;
+        }
+        cancelWindowTransition(inst);
         setWindowInputFocusable(windowId, false);
         inst.state.minimized = true;
         inst.state.focused = false;
-        inst.rootView.setVisibility(View.GONE);
+        inst.miniAppHost.setMinimized(true);
+
+        String nextFocused = findTopVisibleWindowId();
+        syncWindowZIndicesAndChrome(nextFocused);
+        View dockAnchor = refreshTaskbarDock(windowId);
         saveSessionSnapshot();
         broadcastWindowStates();
+
+        animateWindowMinimizeToDock(inst, dockAnchor);
+    }
+
+    private void animateWindowMinimizeToDock(FloatingWindowInstance inst, @Nullable View dockAnchor) {
+        if (preferences.isWindowAnimationEnabled()
+                && inst.rootView.isAttachedToWindow()
+                && inst.rootView.getVisibility() == View.VISIBLE) {
+            final int startX = inst.params.x;
+            final int startY = inst.params.y;
+            final float startAlpha = inst.state.alpha;
+            final Point targetCenter = getDockTargetCenter(dockAnchor);
+            final int endX = targetCenter.x - inst.params.width / 2;
+            final int endY = targetCenter.y - inst.params.height / 2;
+
+            ValueAnimator anim = ValueAnimator.ofFloat(0f, 1f);
+            anim.setDuration(260L);
+            anim.setInterpolator(new AccelerateDecelerateInterpolator());
+            anim.addUpdateListener(a -> {
+                if (!inst.rootView.isAttachedToWindow()) return;
+                float t = (float) a.getAnimatedValue();
+                inst.params.x = Math.round(startX + (endX - startX) * t);
+                inst.params.y = Math.round(startY + (endY - startY) * t);
+                try {
+                    windowManager.updateViewLayout(inst.rootView, inst.params);
+                } catch (Exception ignored) {}
+                float scale = 1.0f - (0.82f * t);
+                inst.rootView.setScaleX(scale);
+                inst.rootView.setScaleY(scale);
+                inst.rootView.setAlpha(startAlpha * (1.0f - 0.88f * t));
+            });
+            anim.addListener(new AnimatorListenerAdapter() {
+                boolean canceled = false;
+
+                @Override
+                public void onAnimationCancel(Animator animation) {
+                    canceled = true;
+                }
+
+                @Override
+                public void onAnimationEnd(Animator animation) {
+                    if (inst.transitionAnimator == anim) {
+                        inst.transitionAnimator = null;
+                    }
+                    if (!canceled && inst.state.minimized) {
+                        inst.rootView.setVisibility(View.GONE);
+                        inst.rootView.setScaleX(1f);
+                        inst.rootView.setScaleY(1f);
+                        inst.rootView.setAlpha(inst.state.alpha);
+                        inst.params.x = inst.state.x;
+                        inst.params.y = inst.state.y;
+                        if (inst.rootView.isAttachedToWindow()) {
+                            try {
+                                windowManager.updateViewLayout(inst.rootView, inst.params);
+                            } catch (Exception ignored) {}
+                        }
+                    }
+                }
+            });
+            inst.transitionAnimator = anim;
+            anim.start();
+        } else {
+            inst.rootView.setVisibility(View.GONE);
+        }
     }
 
     private void restoreOrFocusWindow(String windowId) {
         FloatingWindowInstance inst = windows.get(windowId);
         if (inst == null) return;
+        boolean wasMinimized = inst.state.minimized;
+        Point dockOriginCenter = wasMinimized ? getDockTargetCenter(findDockIconView(windowId)) : null;
+
+        cancelWindowTransition(inst);
         inst.state.minimized = false;
+        inst.miniAppHost.setMinimized(false);
+        refreshTaskbarDock(null);
+
         inst.rootView.setVisibility(View.VISIBLE);
-        focusWindow(windowId);
-        if (preferences.isWindowAnimationEnabled()) {
-            inst.rootView.setScaleX(0.9f);
-            inst.rootView.setScaleY(0.9f);
+        boolean moved = zOrderManager.bringToFront(windowId);
+        syncWindowZIndicesAndChrome(windowId);
+        if (moved || windows.size() > 1) {
+            commitWindowZOrderToWindowManager(windowId);
+        }
+
+        if (wasMinimized && preferences.isWindowAnimationEnabled() && inst.rootView.isAttachedToWindow()) {
+            final int startX = dockOriginCenter.x - inst.params.width / 2;
+            final int startY = dockOriginCenter.y - inst.params.height / 2;
+            final int endX = inst.state.x;
+            final int endY = inst.state.y;
+            final float endAlpha = inst.state.alpha;
+
+            inst.params.x = startX;
+            inst.params.y = startY;
+            inst.rootView.setScaleX(0.2f);
+            inst.rootView.setScaleY(0.2f);
+            inst.rootView.setAlpha(0.15f);
+            try {
+                windowManager.updateViewLayout(inst.rootView, inst.params);
+            } catch (Exception ignored) {}
+
+            ValueAnimator anim = ValueAnimator.ofFloat(0f, 1f);
+            anim.setDuration(240L);
+            anim.setInterpolator(new DecelerateInterpolator());
+            anim.addUpdateListener(a -> {
+                if (!inst.rootView.isAttachedToWindow()) return;
+                float t = (float) a.getAnimatedValue();
+                inst.params.x = Math.round(startX + (endX - startX) * t);
+                inst.params.y = Math.round(startY + (endY - startY) * t);
+                try {
+                    windowManager.updateViewLayout(inst.rootView, inst.params);
+                } catch (Exception ignored) {}
+                float scale = 0.2f + (0.8f * t);
+                inst.rootView.setScaleX(scale);
+                inst.rootView.setScaleY(scale);
+                inst.rootView.setAlpha(0.15f + (endAlpha - 0.15f) * t);
+            });
+            anim.addListener(new AnimatorListenerAdapter() {
+                @Override
+                public void onAnimationEnd(Animator animation) {
+                    if (inst.transitionAnimator == anim) {
+                        inst.transitionAnimator = null;
+                    }
+                    inst.params.x = endX;
+                    inst.params.y = endY;
+                    inst.rootView.setScaleX(1f);
+                    inst.rootView.setScaleY(1f);
+                    inst.rootView.setAlpha(endAlpha);
+                    if (inst.rootView.isAttachedToWindow()) {
+                        try {
+                            windowManager.updateViewLayout(inst.rootView, inst.params);
+                        } catch (Exception ignored) {}
+                    }
+                }
+            });
+            inst.transitionAnimator = anim;
+            anim.start();
+        } else if (preferences.isWindowAnimationEnabled()) {
+            inst.rootView.setScaleX(0.92f);
+            inst.rootView.setScaleY(0.92f);
             inst.rootView.animate().scaleX(1f).scaleY(1f).alpha(inst.state.alpha).setDuration(180).start();
         }
         saveSessionSnapshot();
@@ -1242,36 +2085,49 @@ public class FloatingWindowService extends Service {
     private void toggleMaximizeWindow(String windowId) {
         FloatingWindowInstance inst = windows.get(windowId);
         if (inst == null) return;
-        DisplayMetrics dm = screenMetrics();
+        Rect safe = WindowBoundsHelper.getSafeScreenBounds(windowManager, this);
         if (!inst.state.maximized) {
             inst.state.savedX = inst.params.x;
             inst.state.savedY = inst.params.y;
             inst.state.savedWidthPx = inst.params.width;
             inst.state.savedHeightPx = inst.params.height;
             inst.state.maximized = true;
-            inst.params.x = 16;
-            inst.params.y = 80;
-            inst.params.width = dm.widthPixels - 32;
-            inst.params.height = dm.heightPixels - 180;
+            inst.params.x = safe.left;
+            inst.params.y = safe.top;
+            inst.params.width = safe.width();
+            inst.params.height = safe.height();
         } else {
             inst.state.maximized = false;
-            inst.params.x = inst.state.savedX;
-            inst.params.y = inst.state.savedY;
-            inst.params.width = inst.state.savedWidthPx;
-            inst.params.height = inst.state.savedHeightPx;
+            int minW = EdgeToEdgeHelper.dpToPx(this, 220);
+            int minH = EdgeToEdgeHelper.dpToPx(this, 180);
+            int rw = Math.max(minW, Math.min(safe.width(), inst.state.savedWidthPx));
+            int rh = Math.max(minH, Math.min(safe.height(), inst.state.savedHeightPx));
+            WindowBoundsHelper.ClampedPoint clamped = WindowBoundsHelper.clampWindowPosition(
+                    inst.state.savedX, inst.state.savedY, rw, rh, safe);
+            inst.params.x = clamped.x;
+            inst.params.y = clamped.y;
+            inst.params.width = rw;
+            inst.params.height = rh;
         }
         inst.state.x = inst.params.x;
         inst.state.y = inst.params.y;
         inst.state.widthPx = inst.params.width;
         inst.state.heightPx = inst.params.height;
-        windowManager.updateViewLayout(inst.rootView, inst.params);
+        if (inst.rootView.isAttachedToWindow()) {
+            windowManager.updateViewLayout(inst.rootView, inst.params);
+        }
         saveSessionSnapshot();
     }
 
     private void closeWindow(String windowId) {
         FloatingWindowInstance inst = windows.remove(windowId);
         if (inst == null) return;
-        inst.controller.onDetached();
+        if (windowId.equals(pendingBringToFrontWindowId)) {
+            pendingBringToFrontWindowId = null;
+        }
+        cancelWindowTransition(inst);
+        zOrderManager.removeWindow(windowId);
+        inst.miniAppHost.destroy();
         if (preferences.isWindowAnimationEnabled() && inst.rootView.getVisibility() == View.VISIBLE) {
             inst.rootView.animate().scaleX(0.85f).scaleY(0.85f).alpha(0f).setDuration(150)
                     .withEndAction(() -> {
@@ -1280,6 +2136,9 @@ public class FloatingWindowService extends Service {
         } else {
             try { windowManager.removeView(inst.rootView); } catch (Exception ignored) {}
         }
+        refreshTaskbarDock(null);
+        String nextFocused = findTopVisibleWindowId();
+        syncWindowZIndicesAndChrome(nextFocused);
         updateBubbleBadge();
         saveSessionSnapshot();
         broadcastWindowStates();
@@ -1287,24 +2146,40 @@ public class FloatingWindowService extends Service {
     }
 
     private void minimizeAllWindows() {
+        pendingBringToFrontWindowId = null;
+        List<FloatingWindowInstance> toAnimate = new ArrayList<>();
         for (FloatingWindowInstance inst : windows.values()) {
+            if (!inst.state.minimized) {
+                toAnimate.add(inst);
+            }
+            setWindowInputFocusable(inst.state.windowId, false);
             inst.state.minimized = true;
             inst.state.focused = false;
-            inst.rootView.setVisibility(View.GONE);
+            inst.miniAppHost.setMinimized(true);
+        }
+        syncWindowZIndicesAndChrome(null);
+        refreshTaskbarDock(null);
+        for (FloatingWindowInstance inst : toAnimate) {
+            cancelWindowTransition(inst);
+            animateWindowMinimizeToDock(inst, findDockIconView(inst.state.windowId));
         }
         saveSessionSnapshot();
         broadcastWindowStates();
     }
 
     private void closeAllWindows() {
+        pendingBringToFrontWindowId = null;
+        zOrderManager.clear();
         List<String> ids = new ArrayList<>(windows.keySet());
         for (String id : ids) {
             FloatingWindowInstance inst = windows.remove(id);
             if (inst != null) {
-                inst.controller.onDetached();
+                cancelWindowTransition(inst);
+                inst.miniAppHost.destroy();
                 try { windowManager.removeView(inst.rootView); } catch (Exception ignored) {}
             }
         }
+        removeTaskbarDock();
         updateBubbleBadge();
         saveSessionSnapshot();
         broadcastWindowStates();
@@ -1312,20 +2187,50 @@ public class FloatingWindowService extends Service {
     }
 
     private void applyPreferencesRefresh() {
+        boolean themeChanged = (appliedThemeMode != preferences.getThemeMode());
+        if (themeChanged) {
+            rebuildThemedContext();
+        }
+
         removeBubble();
+        removeBubbleMenu();
         removeSidebar();
+        removeTaskbarDock();
+
         if (preferences.isBubbleEnabled()) createBubble();
         if (preferences.isSidebarEnabled()) createSidebar();
-        for (FloatingWindowInstance inst : windows.values()) {
-            applyWindowChromeStyling(inst, inst.state.focused);
+
+        if (themeChanged && !windows.isEmpty()) {
+            // Preserve Z-order, geometry, and transient MiniApp Bundle state across theme recreation
+            List<FloatingWindowState> preserved = new ArrayList<>();
+            Map<String, Bundle> preservedStates = new HashMap<>();
+            for (String id : zOrderManager.getBottomToTopIds()) {
+                FloatingWindowInstance inst = windows.get(id);
+                if (inst != null) {
+                    preserved.add(inst.state);
+                    preservedStates.put(id, inst.miniAppHost.captureState());
+                }
+            }
+            closeAllWindows();
+            for (FloatingWindowState st : preserved) {
+                openToolWindow(st.toolType, st, null, true, preservedStates.get(st.windowId));
+            }
+        } else {
+            for (FloatingWindowInstance inst : windows.values()) {
+                applyWindowChromeStyling(inst, inst.state.focused);
+            }
+            refreshTaskbarDock(null);
         }
     }
 
     private void saveSessionSnapshot() {
         try {
             JSONArray arr = new JSONArray();
-            for (FloatingWindowInstance inst : windows.values()) {
-                arr.put(inst.state.toJson());
+            for (String id : zOrderManager.getBottomToTopIds()) {
+                FloatingWindowInstance inst = windows.get(id);
+                if (inst != null) {
+                    arr.put(inst.state.toJson());
+                }
             }
             preferences.saveSessionJson(arr.toString());
         } catch (Exception ignored) {}
@@ -1334,10 +2239,14 @@ public class FloatingWindowService extends Service {
     private void restorePreviousSession() {
         try {
             JSONArray arr = new JSONArray(preferences.getSavedSessionJson());
+            List<FloatingWindowState> restored = new ArrayList<>();
             for (int i = 0; i < arr.length(); i++) {
-                FloatingWindowState st = FloatingWindowState.fromJson(arr.getJSONObject(i));
+                restored.add(FloatingWindowState.fromJson(arr.getJSONObject(i)));
+            }
+            Collections.sort(restored, Comparator.comparingInt(a -> a.zIndex));
+            for (FloatingWindowState st : restored) {
                 if (!windows.containsKey(st.windowId)) {
-                    openToolWindow(st.toolType, st);
+                    openToolWindow(st.toolType, st, null, true);
                 }
             }
         } catch (Exception ignored) {}
@@ -1345,17 +2254,22 @@ public class FloatingWindowService extends Service {
 
     private void broadcastWindowStates() {
         List<FloatingWindowState> list = new ArrayList<>();
-        for (FloatingWindowInstance inst : windows.values()) {
-            list.add(inst.state);
+        for (String id : zOrderManager.getTopToBottomIds()) {
+            FloatingWindowInstance inst = windows.get(id);
+            if (inst != null) {
+                list.add(inst.state);
+            }
         }
         FloatingEngineBus.updateWindows(list);
     }
 
     @Override
     public void onDestroy() {
+        mainHandler.removeCallbacksAndMessages(null);
         closeAllWindows();
         removeBubble();
         removeBubbleMenu();
+        removeTaskbarDock();
         removeSidebar();
         FloatingEngineBus.updateRunning(false);
         super.onDestroy();

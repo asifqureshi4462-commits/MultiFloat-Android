@@ -16,8 +16,8 @@
 
         <ImageButton
             android:id="@+id/btn_sb_set_back"
-            android:layout_width="44dp"
-            android:layout_height="44dp"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/cd_back"
             android:src="@drawable/ic_back"
@@ -73,6 +73,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
+                    android:minHeight="48dp"
                     android:text="Left Edge"
                     android:textColor="@color/mf_text_primary" />
 
@@ -81,6 +82,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
+                    android:minHeight="48dp"
                     android:text="Right Edge"
                     android:textColor="@color/mf_text_primary" />
             </RadioGroup>
@@ -88,7 +90,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
+                android:layout_marginTop="14dp"
                 android:text="Sidebar Size"
                 android:textColor="@color/mf_text_primary"
                 android:textSize="14sp"
@@ -101,16 +103,83 @@
                 android:layout_marginTop="6dp"
                 android:orientation="horizontal">
 
-                <RadioButton android:id="@+id/rb_sb_compact" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Compact" android:textColor="@color/mf_text_primary" />
-                <RadioButton android:id="@+id/rb_sb_standard" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Standard" android:textColor="@color/mf_text_primary" />
-                <RadioButton android:id="@+id/rb_sb_large" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Large" android:textColor="@color/mf_text_primary" />
+                <RadioButton
+                    android:id="@+id/rb_sb_compact"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:minHeight="48dp"
+                    android:text="Compact"
+                    android:textColor="@color/mf_text_primary" />
+
+                <RadioButton
+                    android:id="@+id/rb_sb_standard"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:minHeight="48dp"
+                    android:text="Standard"
+                    android:textColor="@color/mf_text_primary" />
+
+                <RadioButton
+                    android:id="@+id/rb_sb_large"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:minHeight="48dp"
+                    android:text="Large"
+                    android:textColor="@color/mf_text_primary" />
+            </RadioGroup>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:text="@string/section_sidebar_icon_style"
+                android:textColor="@color/mf_text_primary"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <RadioGroup
+                android:id="@+id/rg_sb_icon_style"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:orientation="horizontal">
+
+                <RadioButton
+                    android:id="@+id/rb_sb_style_rounded"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:minHeight="48dp"
+                    android:text="Rounded"
+                    android:textColor="@color/mf_text_primary" />
+
+                <RadioButton
+                    android:id="@+id/rb_sb_style_minimal"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:minHeight="48dp"
+                    android:text="Minimal"
+                    android:textColor="@color/mf_text_primary" />
+
+                <RadioButton
+                    android:id="@+id/rb_sb_style_ring"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:minHeight="48dp"
+                    android:text="Ring"
+                    android:textColor="@color/mf_text_primary" />
             </RadioGroup>
 
             <TextView
                 android:id="@+id/tv_sb_opacity_label"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
+                android:layout_marginTop="14dp"
                 android:text="Sidebar Opacity: 92%"
                 android:textColor="@color/mf_text_primary"
                 android:textSize="14sp"
@@ -121,13 +190,24 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="6dp"
-                android:max="60" />
+                android:max="60"
+                android:minHeight="48dp" />
+
+            <Button
+                android:id="@+id/btn_sb_manage_apps"
+                style="@style/Widget.Material3.Button.TonalButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:minHeight="48dp"
+                android:text="@string/btn_manage_installed_apps"
+                app:icon="@drawable/ic_apps" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="20dp"
-                android:text="Pinned Favorite Tools (Shown at Top of Sidebar)"
+                android:text="Pinned Favorite Tools"
                 android:textColor="@color/mf_text_primary"
                 android:textSize="14sp"
                 android:textStyle="bold" />
@@ -137,6 +217,30 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:text="@string/section_sidebar_reorder"
+                android:textColor="@color/mf_text_primary"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="Drag rows or tap arrows to customize drawer shortcut order."
+                android:textColor="@color/mf_text_secondary"
+                android:textSize="11sp" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rv_sb_reorder"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:nestedScrollingEnabled="false" />
         </LinearLayout>
     </ScrollView>
 </LinearLayout>

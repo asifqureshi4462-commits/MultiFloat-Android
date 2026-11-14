@@ -20,9 +20,15 @@ public class MusicControlsController extends BaseMiniAppController {
     private TextView tvTitle, tvArtist, btnEnableListener;
     private boolean assumedPlaying = false;
 
-    public MusicControlsController(Context context, HostCallback hostCallback) {
+    public MusicControlsController(Context context, MiniApp.HostCallback hostCallback) {
         super(context, hostCallback);
         this.audioManager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
+    }
+
+    @androidx.annotation.NonNull
+    @Override
+    public com.example.model.ToolType getToolType() {
+        return com.example.model.ToolType.MUSIC_CONTROLS;
     }
 
     @Override
@@ -78,6 +84,15 @@ public class MusicControlsController extends BaseMiniAppController {
         }
 
         return view;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (PermissionHelper.isNotificationListenerEnabled(context)) {
+            if (btnEnableListener != null) btnEnableListener.setVisibility(View.GONE);
+            MediaSessionMonitorService.refreshActiveSession(context);
+        }
     }
 
     private void sendMediaKey(int keyCode) {

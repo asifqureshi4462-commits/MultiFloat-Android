@@ -29,9 +29,15 @@ public class ClockController extends BaseMiniAppController {
         }
     };
 
-    public ClockController(Context context, HostCallback hostCallback) {
+    public ClockController(Context context, MiniApp.HostCallback hostCallback) {
         super(context, hostCallback);
         this.preferences = MultiFloatApp.get().getPreferences();
+    }
+
+    @androidx.annotation.NonNull
+    @Override
+    public com.example.model.ToolType getToolType() {
+        return com.example.model.ToolType.CLOCK;
     }
 
     @Override
@@ -50,8 +56,21 @@ public class ClockController extends BaseMiniAppController {
             updateClock();
         });
 
-        handler.post(clockTicker);
+        updateClock();
         return view;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        handler.removeCallbacks(clockTicker);
+        handler.post(clockTicker);
+    }
+
+    @Override
+    public void onPause() {
+        handler.removeCallbacks(clockTicker);
+        super.onPause();
     }
 
     private void updateClock() {
@@ -70,8 +89,8 @@ public class ClockController extends BaseMiniAppController {
     }
 
     @Override
-    public void onDetached() {
+    public void onDestroy() {
         handler.removeCallbacks(clockTicker);
-        super.onDetached();
+        super.onDestroy();
     }
 }

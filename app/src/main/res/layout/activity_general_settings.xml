@@ -75,6 +75,21 @@
                 android:text="Auto-Restore Windows on Engine Start"
                 android:textColor="@color/mf_text_primary" />
 
+            <com.google.android.material.materialswitch.MaterialSwitch
+                android:id="@+id/switch_allow_duplicates"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Allow Duplicate Windows Per Tool"
+                android:textColor="@color/mf_text_primary" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="When off, tapping an open tool focuses or restores its existing window instead of opening duplicates."
+                android:textColor="@color/mf_text_secondary"
+                android:textSize="11sp" />
+
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"

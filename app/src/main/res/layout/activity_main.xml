@@ -153,8 +153,9 @@
                     android:id="@+id/btn_launch_engine"
                     style="@style/Widget.Material3.Button"
                     android:layout_width="match_parent"
-                    android:layout_height="50dp"
+                    android:layout_height="wrap_content"
                     android:layout_marginTop="14dp"
+                    android:minHeight="50dp"
                     android:text="@string/launch_floating_engine"
                     android:textSize="15sp" />
 
@@ -168,9 +169,12 @@
                         android:id="@+id/btn_open_tools_menu"
                         style="@style/Widget.Material3.Button.TonalButton"
                         android:layout_width="0dp"
-                        android:layout_height="42dp"
+                        android:layout_height="wrap_content"
                         android:layout_marginEnd="6dp"
                         android:layout_weight="1"
+                        android:maxLines="2"
+                        android:minHeight="48dp"
+                        android:paddingHorizontal="8dp"
                         android:text="@string/btn_tools_menu"
                         android:textSize="12sp" />
 
@@ -178,12 +182,26 @@
                         android:id="@+id/btn_open_window_manager"
                         style="@style/Widget.Material3.Button.OutlinedButton"
                         android:layout_width="0dp"
-                        android:layout_height="42dp"
+                        android:layout_height="wrap_content"
                         android:layout_marginStart="6dp"
                         android:layout_weight="1"
+                        android:maxLines="2"
+                        android:minHeight="48dp"
+                        android:paddingHorizontal="8dp"
                         android:text="@string/btn_window_manager"
                         android:textSize="12sp" />
                 </LinearLayout>
+
+                <Button
+                    android:id="@+id/btn_open_installed_apps"
+                    style="@style/Widget.Material3.Button.TonalButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:minHeight="48dp"
+                    android:text="@string/btn_installed_apps"
+                    android:textSize="13sp"
+                    app:icon="@drawable/ic_apps" />
             </LinearLayout>
 
             <!-- Quick Tools Section -->
@@ -290,8 +308,9 @@
                     android:id="@+id/btn_dash_open_drawer"
                     style="@style/Widget.Material3.Button.TonalButton"
                     android:layout_width="match_parent"
-                    android:layout_height="44dp"
+                    android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
+                    android:minHeight="48dp"
                     android:text="@string/drawer_open_shortcut"
                     android:textSize="13sp" />
             </LinearLayout>
@@ -307,9 +326,12 @@
                     android:id="@+id/btn_dash_appearance"
                     style="@style/Widget.Material3.Button.TonalButton"
                     android:layout_width="0dp"
-                    android:layout_height="46dp"
+                    android:layout_height="wrap_content"
                     android:layout_marginEnd="6dp"
                     android:layout_weight="1"
+                    android:maxLines="2"
+                    android:minHeight="48dp"
+                    android:paddingHorizontal="8dp"
                     android:text="@string/btn_appearance"
                     android:textSize="12sp" />
 
@@ -317,9 +339,12 @@
                     android:id="@+id/btn_dash_sidebar_cfg"
                     style="@style/Widget.Material3.Button.TonalButton"
                     android:layout_width="0dp"
-                    android:layout_height="46dp"
+                    android:layout_height="wrap_content"
                     android:layout_marginStart="6dp"
                     android:layout_weight="1"
+                    android:maxLines="2"
+                    android:minHeight="48dp"
+                    android:paddingHorizontal="8dp"
                     android:text="@string/btn_sidebar_settings"
                     android:textSize="12sp" />
             </LinearLayout>
@@ -334,9 +359,12 @@
                     android:id="@+id/btn_dash_privacy"
                     style="@style/Widget.Material3.Button.OutlinedButton"
                     android:layout_width="0dp"
-                    android:layout_height="44dp"
+                    android:layout_height="wrap_content"
                     android:layout_marginEnd="6dp"
                     android:layout_weight="1"
+                    android:maxLines="2"
+                    android:minHeight="48dp"
+                    android:paddingHorizontal="8dp"
                     android:text="@string/btn_privacy"
                     android:textSize="12sp" />
 
@@ -344,9 +372,12 @@
                     android:id="@+id/btn_dash_about"
                     style="@style/Widget.Material3.Button.OutlinedButton"
                     android:layout_width="0dp"
-                    android:layout_height="44dp"
+                    android:layout_height="wrap_content"
                     android:layout_marginStart="6dp"
                     android:layout_weight="1"
+                    android:maxLines="2"
+                    android:minHeight="48dp"
+                    android:paddingHorizontal="8dp"
                     android:text="@string/btn_about"
                     android:textSize="12sp" />
             </LinearLayout>

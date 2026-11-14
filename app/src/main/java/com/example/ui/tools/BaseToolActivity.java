@@ -8,11 +8,13 @@ import android.widget.TextView;
 import android.widget.Toast;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import com.example.MultiFloatApp;
 import com.example.R;
-import com.example.miniapps.BaseMiniAppController;
-import com.example.miniapps.MiniAppFactory;
+import com.example.miniapps.MiniApp;
+import com.example.miniapps.MiniAppContainerHost;
+import com.example.miniapps.MiniAppRegistry;
 import com.example.model.ToolType;
 import com.example.service.FloatingEngineBus;
 import com.example.ui.PermissionSetupActivity;
@@ -20,9 +22,12 @@ import com.example.ui.settings.GeneralSettingsActivity;
 import com.example.util.EdgeToEdgeHelper;
 import com.example.util.PermissionHelper;
 
-public abstract class BaseToolActivity extends AppCompatActivity implements BaseMiniAppController.HostCallback {
+public abstract class BaseToolActivity extends AppCompatActivity implements MiniApp.HostCallback {
 
-    protected BaseMiniAppController controller;
+    private static final String KEY_MINIAPP_STATE = "miniapp_saved_state";
+
+    protected MiniApp controller;
+    private final MiniAppContainerHost miniAppHost = new MiniAppContainerHost();
 
     private final ActivityResultLauncher<String> cameraLauncher =
             registerForActivityResult(new ActivityResultContracts.RequestPermission(), granted -> {
@@ -60,15 +65,38 @@ public abstract class BaseToolActivity extends AppCompatActivity implements Base
         });
 
         FrameLayout container = findViewById(R.id.tool_host_container);
-        controller = MiniAppFactory.create(type, this, this);
-        container.addView(controller.createView(getLayoutInflater(), container));
+        Bundle miniAppState = savedInstanceState != null ? savedInstanceState.getBundle(KEY_MINIAPP_STATE) : null;
+        controller = MiniAppRegistry.getInstance().create(type, this, this);
+        miniAppHost.attach(controller, getLayoutInflater(), container, miniAppState, false);
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        miniAppHost.dispatchStart();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        miniAppHost.dispatchResume();
+    }
+
+    @Override
+    protected void onPause() {
+        miniAppHost.dispatchPause();
+        super.onPause();
+    }
+
+    @Override
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putBundle(KEY_MINIAPP_STATE, miniAppHost.captureState());
     }
 
     @Override
     protected void onDestroy() {
-        if (controller != null) {
-            controller.onDetached();
-        }
+        miniAppHost.destroy();
         super.onDestroy();
     }
 
@@ -88,7 +116,7 @@ public abstract class BaseToolActivity extends AppCompatActivity implements Base
     }
 
     @Override
-    public void onOpenFullScreenTool(ToolType toolType) {
+    public void onOpenFullScreenTool(@NonNull ToolType toolType) {
         ToolNavigationHelper.openFullScreen(this, toolType);
     }
 }

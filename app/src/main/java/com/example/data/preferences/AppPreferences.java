@@ -248,7 +248,23 @@ public class AppPreferences {
         prefs.edit().putString("custom_shortcut_label", label).apply();
     }
 
-    // Favorites
+    public int getSidebarIconStyle() {
+        return prefs.getInt("sidebar_icon_style", 0); // 0=Rounded, 1=Minimal, 2=Accent Ring
+    }
+
+    public void setSidebarIconStyle(int style) {
+        prefs.edit().putInt("sidebar_icon_style", Math.max(0, Math.min(2, style))).apply();
+    }
+
+    public boolean isAllowDuplicateWindows() {
+        return prefs.getBoolean("allow_duplicate_windows", false);
+    }
+
+    public void setAllowDuplicateWindows(boolean allow) {
+        prefs.edit().putBoolean("allow_duplicate_windows", allow).apply();
+    }
+
+    // Favorites (Internal Mini-Apps)
     public Set<String> getFavoriteTools() {
         Set<String> stored = prefs.getStringSet("favorite_tools", null);
         if (stored == null) {
@@ -274,6 +290,209 @@ public class AppPreferences {
             current.add(toolId);
         }
         prefs.edit().putStringSet("favorite_tools", current).apply();
+    }
+
+    // Installed Android Apps: Favorites, Sidebar Selection, Recents, & Custom Order
+    public Set<String> getFavoriteApps() {
+        Set<String> stored = prefs.getStringSet("favorite_installed_apps", null);
+        return stored == null ? new LinkedHashSet<>() : new LinkedHashSet<>(stored);
+    }
+
+    public boolean isFavoriteApp(String packageName) {
+        return packageName != null && getFavoriteApps().contains(packageName);
+    }
+
+    public void toggleFavoriteApp(String packageName) {
+        if (packageName == null || packageName.isEmpty()) return;
+        Set<String> current = getFavoriteApps();
+        if (current.contains(packageName)) {
+            current.remove(packageName);
+        } else {
+            current.add(packageName);
+        }
+        prefs.edit().putStringSet("favorite_installed_apps", current).apply();
+    }
+
+    public java.util.List<String> getSelectedSidebarApps() {
+        return readJsonStringList("selected_sidebar_apps");
+    }
+
+    public boolean isSidebarAppSelected(String packageName) {
+        return packageName != null && getSelectedSidebarApps().contains(packageName);
+    }
+
+    public void setSelectedSidebarApps(java.util.List<String> packages) {
+        writeJsonStringList("selected_sidebar_apps", packages);
+    }
+
+    public boolean toggleSidebarApp(String packageName) {
+        if (packageName == null || packageName.isEmpty()) return false;
+        java.util.List<String> selected = getSelectedSidebarApps();
+        java.util.List<String> order = getSidebarCustomOrder();
+        String appKey = com.example.model.SidebarShortcut.appKey(packageName);
+        boolean nowSelected;
+        if (selected.contains(packageName)) {
+            selected.remove(packageName);
+            order.remove(appKey);
+            nowSelected = false;
+        } else {
+            selected.add(packageName);
+            if (!order.contains(appKey)) {
+                order.add(0, appKey);
+            }
+            nowSelected = true;
+        }
+        setSelectedSidebarApps(selected);
+        setSidebarCustomOrder(order);
+        return nowSelected;
+    }
+
+    public java.util.List<String> getSidebarCustomOrder() {
+        java.util.List<String> stored = readJsonStringList("sidebar_custom_order");
+        if (stored.isEmpty()) {
+            java.util.List<String> defaults = new java.util.ArrayList<>();
+            for (String pkg : getSelectedSidebarApps()) {
+                defaults.add(com.example.model.SidebarShortcut.appKey(pkg));
+            }
+            for (ToolType type : ToolType.getOrderedDrawerTools(ToolType.DrawerFilter.ALL, getFavoriteTools())) {
+                defaults.add(com.example.model.SidebarShortcut.toolKey(type));
+            }
+            return defaults;
+        }
+        // Append any newly added selected apps or tools not yet in stored list
+        java.util.List<String> merged = new java.util.ArrayList<>(stored);
+        for (String pkg : getSelectedSidebarApps()) {
+            String key = com.example.model.SidebarShortcut.appKey(pkg);
+            if (!merged.contains(key)) {
+                merged.add(0, key);
+            }
+        }
+        for (ToolType type : ToolType.values()) {
+            String key = com.example.model.SidebarShortcut.toolKey(type);
+            if (!merged.contains(key)) {
+                merged.add(key);
+            }
+        }
+        return merged;
+    }
+
+    public void setSidebarCustomOrder(java.util.List<String> keys) {
+        writeJsonStringList("sidebar_custom_order", keys);
+    }
+
+    public void recordRecentApp(String packageName, long timestampMs) {
+        if (packageName == null || packageName.isEmpty()) return;
+        java.util.Map<String, Long> map = getRecentAppTimestamps();
+        java.util.LinkedHashMap<String, Long> updated = new java.util.LinkedHashMap<>();
+        updated.put(packageName, timestampMs);
+        int count = 1;
+        for (java.util.Map.Entry<String, Long> entry : map.entrySet()) {
+            if (!packageName.equals(entry.getKey()) && count < 30) {
+                updated.put(entry.getKey(), entry.getValue());
+                count++;
+            }
+        }
+        org.json.JSONArray arr = new org.json.JSONArray();
+        for (java.util.Map.Entry<String, Long> entry : updated.entrySet()) {
+            try {
+                org.json.JSONObject obj = new org.json.JSONObject();
+                obj.put("pkg", entry.getKey());
+                obj.put("ts", entry.getValue());
+                arr.put(obj);
+            } catch (Exception ignored) {}
+        }
+        prefs.edit().putString("recent_installed_apps", arr.toString()).apply();
+    }
+
+    public java.util.Map<String, Long> getRecentAppTimestamps() {
+        java.util.LinkedHashMap<String, Long> result = new java.util.LinkedHashMap<>();
+        String raw = prefs.getString("recent_installed_apps", "[]");
+        try {
+            org.json.JSONArray arr = new org.json.JSONArray(raw);
+            for (int i = 0; i < arr.length(); i++) {
+                org.json.JSONObject obj = arr.getJSONObject(i);
+                String pkg = obj.optString("pkg", "");
+                long ts = obj.optLong("ts", 0L);
+                if (!pkg.isEmpty()) {
+                    result.put(pkg, ts);
+                }
+            }
+        } catch (Exception ignored) {}
+        return result;
+    }
+
+    public boolean cleanupUninstalledApps(Set<String> installedPackages) {
+        if (installedPackages == null) return false;
+        boolean changed = false;
+
+        Set<String> favs = getFavoriteApps();
+        if (favs.removeIf(pkg -> !installedPackages.contains(pkg))) {
+            prefs.edit().putStringSet("favorite_installed_apps", favs).apply();
+            changed = true;
+        }
+
+        java.util.List<String> selected = getSelectedSidebarApps();
+        if (selected.removeIf(pkg -> !installedPackages.contains(pkg))) {
+            setSelectedSidebarApps(selected);
+            changed = true;
+        }
+
+        java.util.List<String> order = readJsonStringList("sidebar_custom_order");
+        if (!order.isEmpty()) {
+            boolean orderChanged = order.removeIf(key -> {
+                if (!com.example.model.SidebarShortcut.isAppKey(key)) return false;
+                String pkg = key.substring(com.example.model.SidebarShortcut.PREFIX_APP.length());
+                return !installedPackages.contains(pkg);
+            });
+            if (orderChanged) {
+                setSidebarCustomOrder(order);
+                changed = true;
+            }
+        }
+
+        java.util.Map<String, Long> recents = getRecentAppTimestamps();
+        if (recents.keySet().removeIf(pkg -> !installedPackages.contains(pkg))) {
+            org.json.JSONArray arr = new org.json.JSONArray();
+            for (java.util.Map.Entry<String, Long> entry : recents.entrySet()) {
+                try {
+                    org.json.JSONObject obj = new org.json.JSONObject();
+                    obj.put("pkg", entry.getKey());
+                    obj.put("ts", entry.getValue());
+                    arr.put(obj);
+                } catch (Exception ignored) {}
+            }
+            prefs.edit().putString("recent_installed_apps", arr.toString()).apply();
+            changed = true;
+        }
+
+        return changed;
+    }
+
+    private java.util.List<String> readJsonStringList(String key) {
+        java.util.List<String> list = new java.util.ArrayList<>();
+        String raw = prefs.getString(key, "[]");
+        try {
+            org.json.JSONArray arr = new org.json.JSONArray(raw);
+            for (int i = 0; i < arr.length(); i++) {
+                String val = arr.optString(i, "");
+                if (!val.isEmpty() && !list.contains(val)) {
+                    list.add(val);
+                }
+            }
+        } catch (Exception ignored) {}
+        return list;
+    }
+
+    private void writeJsonStringList(String key, java.util.List<String> items) {
+        org.json.JSONArray arr = new org.json.JSONArray();
+        if (items != null) {
+            for (String item : items) {
+                if (item != null && !item.isEmpty()) {
+                    arr.put(item);
+                }
+            }
+        }
+        prefs.edit().putString(key, arr.toString()).apply();
     }
 
     // AI & Translator API Configuration

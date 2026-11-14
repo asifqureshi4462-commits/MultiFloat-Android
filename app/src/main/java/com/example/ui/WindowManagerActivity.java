@@ -78,8 +78,11 @@ public class WindowManagerActivity extends AppCompatActivity {
             FloatingWindowState st = states.get(position);
             holder.icon.setImageResource(st.toolType.iconRes);
             holder.title.setText(st.title);
-            holder.status.setText(st.minimized ? "Minimized" : (st.focused ? "Active • Focused" : "Open"));
-            holder.focusBtn.setText(st.minimized ? "Restore" : "Focus");
+            String layerTag = "Layer #" + (st.zIndex + 1);
+            holder.status.setText(st.minimized
+                    ? "Minimized"
+                    : (st.focused ? layerTag + " • Front Active" : layerTag + " • Background"));
+            holder.focusBtn.setText(st.minimized ? "Restore" : "Bring Front");
 
             holder.focusBtn.setOnClickListener(v ->
                     FloatingEngineBus.sendWindowAction(WindowManagerActivity.this,

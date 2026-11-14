@@ -29,9 +29,15 @@ public class TodoController extends BaseMiniAppController {
     private TextView tvEmpty;
     private String selectedPriority = "Normal";
 
-    public TodoController(Context context, HostCallback hostCallback) {
+    public TodoController(Context context, MiniApp.HostCallback hostCallback) {
         super(context, hostCallback);
         this.repository = MultiFloatApp.get().getTodoRepository();
+    }
+
+    @NonNull
+    @Override
+    public com.example.model.ToolType getToolType() {
+        return com.example.model.ToolType.TODO;
     }
 
     @Override

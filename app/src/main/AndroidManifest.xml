@@ -22,6 +22,10 @@
             <action android:name="android.intent.action.VIEW" />
             <data android:scheme="https" />
         </intent>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
     </queries>
 
     <application
@@ -50,6 +54,7 @@
         <activity android:name=".ui.PermissionSetupActivity" android:exported="false" />
         <activity android:name=".ui.MainActivity" android:exported="false" android:launchMode="singleTop" />
         <activity android:name=".ui.FloatingToolsMenuActivity" android:exported="false" />
+        <activity android:name=".ui.InstalledAppsActivity" android:exported="false" android:windowSoftInputMode="adjustResize" />
         <activity android:name=".ui.WindowManagerActivity" android:exported="false" />
 
         <!-- Mini-App Dedicated Screens -->

@@ -14,17 +14,18 @@
     android:paddingVertical="8dp">
 
     <FrameLayout
-        android:layout_width="34dp"
-        android:layout_height="34dp"
+        android:id="@+id/frame_drawer_icon_bg"
+        android:layout_width="36dp"
+        android:layout_height="36dp"
         android:background="@drawable/bg_pill_chip">
 
         <ImageView
             android:id="@+id/iv_drawer_tool_icon"
-            android:layout_width="19dp"
-            android:layout_height="19dp"
+            android:layout_width="22dp"
+            android:layout_height="22dp"
             android:layout_gravity="center"
             android:contentDescription="@string/cd_drawer_tool_icon"
-            app:tint="@color/electric_cyan" />
+            android:scaleType="fitCenter" />
     </FrameLayout>
 
     <LinearLayout

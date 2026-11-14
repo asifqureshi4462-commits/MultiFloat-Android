@@ -5,70 +5,87 @@
     android:layout_height="wrap_content"
     android:layout_marginVertical="5dp"
     android:background="@drawable/bg_glass_card"
-    android:gravity="center_vertical"
-    android:orientation="horizontal"
+    android:orientation="vertical"
     android:padding="12dp">
 
-    <ImageView
-        android:id="@+id/iv_menu_tool_icon"
-        android:layout_width="36dp"
-        android:layout_height="36dp"
-        android:background="@drawable/bg_pill_chip"
-        android:contentDescription="Tool icon"
-        android:padding="7dp"
-        app:tint="@color/electric_cyan" />
-
     <LinearLayout
-        android:layout_width="0dp"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginStart="12dp"
-        android:layout_weight="1"
-        android:orientation="vertical">
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
 
-        <TextView
-            android:id="@+id/tv_menu_tool_title"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textColor="@color/mf_text_primary"
-            android:textSize="15sp"
-            android:textStyle="bold" />
+        <ImageView
+            android:id="@+id/iv_menu_tool_icon"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="@drawable/bg_pill_chip"
+            android:contentDescription="@string/cd_drawer_tool_icon"
+            android:padding="8dp"
+            app:tint="@color/electric_cyan" />
 
-        <TextView
-            android:id="@+id/tv_menu_tool_cat"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:textColor="@color/mf_text_secondary"
-            android:textSize="11sp" />
+            android:layout_marginStart="12dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tv_menu_tool_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textColor="@color/mf_text_primary"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tv_menu_tool_cat"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textColor="@color/mf_text_secondary"
+                android:textSize="11sp" />
+        </LinearLayout>
+
+        <ImageButton
+            android:id="@+id/btn_menu_fav"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Toggle favorite"
+            android:src="@drawable/ic_star_outline"
+            app:tint="@color/amber_accent" />
     </LinearLayout>
 
-    <ImageButton
-        android:id="@+id/btn_menu_fav"
-        android:layout_width="38dp"
-        android:layout_height="38dp"
-        android:background="?attr/selectableItemBackgroundBorderless"
-        android:contentDescription="Toggle favorite"
-        android:src="@drawable/ic_star_outline"
-        app:tint="@color/amber_accent" />
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:orientation="horizontal">
 
-    <Button
-        android:id="@+id/btn_menu_full"
-        style="@style/Widget.Material3.Button.OutlinedButton"
-        android:layout_width="wrap_content"
-        android:layout_height="36dp"
-        android:layout_marginStart="4dp"
-        android:minWidth="0dp"
-        android:paddingHorizontal="10dp"
-        android:text="Open"
-        android:textSize="11sp" />
+        <Button
+            android:id="@+id/btn_menu_full"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="6dp"
+            android:layout_weight="1"
+            android:minHeight="48dp"
+            android:text="Open Full"
+            android:textSize="12sp" />
 
-    <Button
-        android:id="@+id/btn_menu_float"
-        style="@style/Widget.Material3.Button"
-        android:layout_width="wrap_content"
-        android:layout_height="36dp"
-        android:layout_marginStart="6dp"
-        android:minWidth="0dp"
-        android:paddingHorizontal="12dp"
-        android:text="Float"
-        android:textSize="11sp" />
+        <Button
+            android:id="@+id/btn_menu_float"
+            style="@style/Widget.Material3.Button"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:layout_weight="1"
+            android:minHeight="48dp"
+            android:text="Float Window"
+            android:textSize="12sp" />
+    </LinearLayout>
 </LinearLayout>

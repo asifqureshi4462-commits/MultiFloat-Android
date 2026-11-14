@@ -100,4 +100,40 @@
     <string name="drawer_drag_hint_move">Drag onto screen</string>
     <string name="drawer_drag_hint_release">Release to launch here</string>
     <string name="drawer_open_shortcut">Open Slide-Out Drawer</string>
+    <string name="cd_dock_restore_window">Restore minimized floating window</string>
+    <string name="win_hint_move_resize">Drag title to move • Edges &amp; corners to resize</string>
+    <string name="cd_resize_edge_left">Resize left edge</string>
+    <string name="cd_resize_edge_right">Resize right edge</string>
+    <string name="cd_resize_edge_top">Resize top edge</string>
+    <string name="cd_resize_edge_bottom">Resize bottom edge</string>
+    <string name="cd_resize_corner_tl">Resize top-left corner</string>
+    <string name="cd_resize_corner_tr">Resize top-right corner</string>
+    <string name="cd_resize_corner_bl">Resize bottom-left corner</string>
+
+    <!-- Installed Apps & External Freeform Support -->
+    <string name="btn_installed_apps">Installed Apps</string>
+    <string name="installed_apps_subtitle">Launch installed phone apps or pin them to the MultiFloat sidebar.</string>
+    <string name="installed_apps_search_hint">Search apps or package name…</string>
+    <string name="installed_apps_empty">No matching installed apps found.</string>
+    <string name="installed_apps_filter_all">All (A–Z)</string>
+    <string name="installed_apps_filter_recent">Recent</string>
+    <string name="installed_apps_filter_favorites">Favorites</string>
+    <string name="installed_apps_filter_sidebar">In Sidebar</string>
+    <string name="installed_apps_refresh">Refresh</string>
+    <string name="freeform_supported_badge">Freeform Multi-Window Supported</string>
+    <string name="freeform_unsupported_badge">Freeform Restricted by Android/OEM</string>
+    <string name="freeform_info_title">External App Floating Windows</string>
+    <string name="freeform_unsupported_explanation">Android only allows third-party apps to open inside floating freeform windows when the device firmware enables Freeform Window Management (or Developer Options → Enable freeform windows). MultiFloat never fakes external apps with screenshots or WebViews. You can launch this app normally instead.</string>
+    <string name="action_launch_normally">Open App Normally</string>
+    <string name="action_open_dev_options">Developer Options</string>
+    <string name="app_uninstalled_removed">%s is no longer installed and was removed from your shortcuts.</string>
+    <string name="drawer_filter_apps">Apps</string>
+    <string name="drawer_filter_tools">Tools</string>
+    <string name="drawer_search_hint">Search tools or apps…</string>
+    <string name="btn_close_bubble">Close Bubble</string>
+    <string name="btn_new_instance">New Window</string>
+    <string name="section_sidebar_apps">Pinned Installed Apps</string>
+    <string name="btn_manage_installed_apps">Select Installed Apps for Sidebar</string>
+    <string name="section_sidebar_reorder">Custom Sidebar Shortcut Order</string>
+    <string name="section_sidebar_icon_style">Sidebar Icon Style</string>
 </resources>

@@ -10,6 +10,7 @@ import com.example.data.preferences.SecureKeyStore;
 import com.example.data.repository.AiChatRepository;
 import com.example.data.repository.CalculatorRepository;
 import com.example.data.repository.ClipboardRepository;
+import com.example.data.repository.InstalledAppsRepository;
 import com.example.data.repository.NotesRepository;
 import com.example.data.repository.TextFileRepository;
 import com.example.data.repository.TodoRepository;
@@ -37,6 +38,7 @@ public class MultiFloatApp extends Application {
     private TranslatorRepository translatorRepository;
     private TextFileRepository textFileRepository;
     private ToolsRepository toolsRepository;
+    private InstalledAppsRepository installedAppsRepository;
 
     @Override
     public void onCreate() {
@@ -58,6 +60,8 @@ public class MultiFloatApp extends Application {
         translatorRepository = new TranslatorRepository(preferences, secureKeyStore, ioExecutor);
         textFileRepository = new TextFileRepository(database.savedTextFileDao(), ioExecutor);
         toolsRepository = new ToolsRepository(database.toolUsageDao(), preferences, ioExecutor);
+        installedAppsRepository = new InstalledAppsRepository(preferences);
+        com.example.miniapps.MiniAppRegistry.getInstance();
 
         createNotificationChannels();
     }
@@ -94,4 +98,6 @@ public class MultiFloatApp extends Application {
     public TranslatorRepository getTranslatorRepository() { return translatorRepository; }
     public TextFileRepository getTextFileRepository() { return textFileRepository; }
     public ToolsRepository getToolsRepository() { return toolsRepository; }
+    public InstalledAppsRepository getInstalledAppsRepository() { return installedAppsRepository; }
+    public com.example.miniapps.MiniAppRegistry getMiniAppRegistry() { return com.example.miniapps.MiniAppRegistry.getInstance(); }
 }

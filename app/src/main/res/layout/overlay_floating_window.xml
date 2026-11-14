@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<com.example.ui.view.FloatingWindowFrame xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/window_frame"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:clipChildren="false"
+    android:clipToPadding="false"
     android:elevation="14dp"
     android:padding="2dp">
 
@@ -11,16 +13,20 @@
         android:id="@+id/window_card_inner"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:layout_margin="5dp"
         android:orientation="vertical">
 
-        <!-- Draggable Title Bar -->
+        <!-- Draggable Title Bar with Explicit Contrast Header -->
         <LinearLayout
             android:id="@+id/window_title_bar"
             android:layout_width="match_parent"
-            android:layout_height="44dp"
+            android:layout_height="46dp"
+            android:background="@color/mf_window_header"
             android:gravity="center_vertical"
             android:orientation="horizontal"
-            android:paddingHorizontal="10dp">
+            android:paddingStart="12dp"
+            android:paddingTop="3dp"
+            android:paddingEnd="10dp">
 
             <View
                 android:id="@+id/view_focus_dot"
@@ -34,7 +40,7 @@
                 android:layout_height="18dp"
                 android:layout_marginStart="8dp"
                 android:contentDescription="Tool icon"
-                app:tint="@color/electric_cyan" />
+                app:tint="@color/mf_cyan_text" />
 
             <TextView
                 android:id="@+id/tv_window_title"
@@ -52,8 +58,8 @@
 
             <ImageButton
                 android:id="@+id/btn_win_opacity"
-                android:layout_width="34dp"
-                android:layout_height="34dp"
+                android:layout_width="36dp"
+                android:layout_height="40dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:contentDescription="@string/cd_window_opacity"
                 android:src="@drawable/ic_opacity"
@@ -61,8 +67,8 @@
 
             <ImageButton
                 android:id="@+id/btn_win_minimize"
-                android:layout_width="34dp"
-                android:layout_height="34dp"
+                android:layout_width="36dp"
+                android:layout_height="40dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:contentDescription="@string/cd_minimize_window"
                 android:src="@drawable/ic_minimize"
@@ -70,8 +76,8 @@
 
             <ImageButton
                 android:id="@+id/btn_win_maximize"
-                android:layout_width="34dp"
-                android:layout_height="34dp"
+                android:layout_width="36dp"
+                android:layout_height="40dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:contentDescription="@string/cd_maximize_window"
                 android:src="@drawable/ic_maximize"
@@ -79,8 +85,9 @@
 
             <ImageButton
                 android:id="@+id/btn_win_close"
-                android:layout_width="34dp"
-                android:layout_height="34dp"
+                android:layout_width="36dp"
+                android:layout_height="40dp"
+                android:layout_marginEnd="4dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:contentDescription="@string/cd_close_window"
                 android:src="@drawable/ic_close"
@@ -92,6 +99,7 @@
             android:id="@+id/panel_win_opacity_bar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:background="@color/mf_window_header"
             android:gravity="center_vertical"
             android:orientation="horizontal"
             android:paddingHorizontal="12dp"
@@ -126,31 +134,154 @@
             android:layout_height="0dp"
             android:layout_weight="1" />
 
-        <!-- Bottom Status & Resize Handle Bar -->
+        <!-- Bottom Status Hint Bar -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="22dp"
             android:gravity="center_vertical"
             android:orientation="horizontal"
-            android:paddingHorizontal="8dp">
+            android:paddingHorizontal="14dp">
 
             <TextView
                 android:id="@+id/tv_win_hint"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Drag title to move • Drag corner to resize"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text="@string/win_hint_move_resize"
                 android:textColor="@color/mf_text_muted"
                 android:textSize="9sp" />
-
-            <ImageView
-                android:id="@+id/iv_resize_handle"
-                android:layout_width="22dp"
-                android:layout_height="22dp"
-                android:contentDescription="@string/cd_resize_window"
-                android:padding="3dp"
-                android:src="@drawable/ic_resize"
-                app:tint="@color/electric_cyan" />
         </LinearLayout>
     </LinearLayout>
-</FrameLayout>
+
+    <!-- Edge Visual Resize Handles (positioned strictly along outer frame margins so title bar dragging never collides) -->
+    <FrameLayout
+        android:id="@+id/resize_edge_left"
+        android:layout_width="14dp"
+        android:layout_height="76dp"
+        android:layout_gravity="start|center_vertical"
+        android:contentDescription="@string/cd_resize_edge_left">
+
+        <View
+            android:id="@+id/pill_resize_left"
+            android:layout_width="4dp"
+            android:layout_height="40dp"
+            android:layout_gravity="start|center_vertical"
+            android:background="@drawable/bg_resize_pill" />
+    </FrameLayout>
+
+    <FrameLayout
+        android:id="@+id/resize_edge_right"
+        android:layout_width="14dp"
+        android:layout_height="76dp"
+        android:layout_gravity="end|center_vertical"
+        android:contentDescription="@string/cd_resize_edge_right">
+
+        <View
+            android:id="@+id/pill_resize_right"
+            android:layout_width="4dp"
+            android:layout_height="40dp"
+            android:layout_gravity="end|center_vertical"
+            android:background="@drawable/bg_resize_pill" />
+    </FrameLayout>
+
+    <FrameLayout
+        android:id="@+id/resize_edge_top"
+        android:layout_width="64dp"
+        android:layout_height="9dp"
+        android:layout_gravity="top|center_horizontal"
+        android:contentDescription="@string/cd_resize_edge_top">
+
+        <View
+            android:id="@+id/pill_resize_top"
+            android:layout_width="40dp"
+            android:layout_height="4dp"
+            android:layout_gravity="top|center_horizontal"
+            android:background="@drawable/bg_resize_pill" />
+    </FrameLayout>
+
+    <FrameLayout
+        android:id="@+id/resize_edge_bottom"
+        android:layout_width="76dp"
+        android:layout_height="14dp"
+        android:layout_gravity="bottom|center_horizontal"
+        android:contentDescription="@string/cd_resize_edge_bottom">
+
+        <View
+            android:id="@+id/pill_resize_bottom"
+            android:layout_width="42dp"
+            android:layout_height="4dp"
+            android:layout_gravity="bottom|center_horizontal"
+            android:background="@drawable/bg_resize_pill" />
+    </FrameLayout>
+
+    <!-- Corner Visual Resize Handles -->
+    <FrameLayout
+        android:id="@+id/resize_corner_top_left"
+        android:layout_width="18dp"
+        android:layout_height="18dp"
+        android:layout_gravity="top|start"
+        android:contentDescription="@string/cd_resize_corner_tl">
+
+        <ImageView
+            android:id="@+id/iv_resize_tl"
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:layout_gravity="top|start"
+            android:contentDescription="@null"
+            android:src="@drawable/ic_resize_corner_tl"
+            app:tint="@color/mf_cyan_text" />
+    </FrameLayout>
+
+    <FrameLayout
+        android:id="@+id/resize_corner_top_right"
+        android:layout_width="18dp"
+        android:layout_height="18dp"
+        android:layout_gravity="top|end"
+        android:contentDescription="@string/cd_resize_corner_tr">
+
+        <ImageView
+            android:id="@+id/iv_resize_tr"
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:layout_gravity="top|end"
+            android:contentDescription="@null"
+            android:src="@drawable/ic_resize_corner_tr"
+            app:tint="@color/mf_cyan_text" />
+    </FrameLayout>
+
+    <FrameLayout
+        android:id="@+id/resize_corner_bottom_left"
+        android:layout_width="26dp"
+        android:layout_height="26dp"
+        android:layout_gravity="bottom|start"
+        android:contentDescription="@string/cd_resize_corner_bl">
+
+        <ImageView
+            android:id="@+id/iv_resize_bl"
+            android:layout_width="18dp"
+            android:layout_height="18dp"
+            android:layout_gravity="bottom|start"
+            android:contentDescription="@null"
+            android:src="@drawable/ic_resize_corner_bl"
+            app:tint="@color/mf_cyan_text" />
+    </FrameLayout>
+
+    <FrameLayout
+        android:id="@+id/resize_corner_bottom_right"
+        android:layout_width="26dp"
+        android:layout_height="26dp"
+        android:layout_gravity="bottom|end"
+        android:contentDescription="@string/cd_resize_window">
+
+        <ImageView
+            android:id="@+id/iv_resize_handle"
+            android:layout_width="18dp"
+            android:layout_height="18dp"
+            android:layout_gravity="bottom|end"
+            android:contentDescription="@null"
+            android:src="@drawable/ic_resize_corner_br"
+            app:tint="@color/mf_cyan_text" />
+    </FrameLayout>
+</com.example.ui.view.FloatingWindowFrame>

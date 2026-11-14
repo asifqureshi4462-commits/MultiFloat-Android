@@ -97,6 +97,9 @@ public class MainActivity extends AppCompatActivity {
         findViewById(R.id.btn_open_window_manager).setOnClickListener(v ->
                 startActivity(new Intent(this, WindowManagerActivity.class)));
 
+        findViewById(R.id.btn_open_installed_apps).setOnClickListener(v ->
+                startActivity(new Intent(this, InstalledAppsActivity.class)));
+
         findViewById(R.id.btn_dash_appearance).setOnClickListener(v ->
                 startActivity(new Intent(this, AppearanceSettingsActivity.class)));
 
